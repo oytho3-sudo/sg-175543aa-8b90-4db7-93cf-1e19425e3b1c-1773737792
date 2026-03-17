@@ -1,7 +1,406 @@
 import { SEO } from "@/components/SEO";
 import Head from "next/head";
+import { useEffect, useRef } from "react";
 
 export default function ServiceBericht() {
+  const sigGerlievaRef = useRef<HTMLCanvasElement>(null);
+  const sigKundeRef = useRef<HTMLCanvasElement>(null);
+  const loadInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Signature data storage
+    const sigData: Record<string, string> = {};
+
+    // Toast function
+    const showToast = (msg: string, type?: string) => {
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + (type || '');
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.add('show'), 100);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    };
+
+    // Clear signature function
+    const clearSig = (id: string) => {
+      const canvas = document.getElementById(id) as HTMLCanvasElement;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      delete sigData[id];
+    };
+
+    // Redraw preview canvas
+    const redrawPreviewCanvas = (id: string) => {
+      const canvas = document.getElementById(id) as HTMLCanvasElement;
+      if (!canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width || canvas.offsetWidth || 300;
+      const h = rect.height || canvas.offsetHeight || 90;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+      if (sigData[id]) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, w, h);
+        img.src = sigData[id];
+      } else {
+        ctx.fillStyle = '#bbb';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Tippen zum Unterschreiben', w / 2, h / 2);
+      }
+    };
+
+    // Collect form data
+    const collectFormData = () => {
+      const data: any = {
+        version: 1,
+        ts: new Date().toISOString(),
+        inputs: {},
+        checkboxes: {},
+        textareas: {},
+        signatures: {}
+      };
+
+      document.querySelectorAll('input[type="text"],input[type="number"],input[type="time"],input[type="date"]').forEach((inp, i) => {
+        data.inputs[i] = (inp as HTMLInputElement).value;
+      });
+
+      document.querySelectorAll('input[type="checkbox"]').forEach((inp, i) => {
+        data.checkboxes[i] = (inp as HTMLInputElement).checked;
+      });
+
+      document.querySelectorAll('textarea').forEach((ta, i) => {
+        data.textareas[i] = (ta as HTMLTextAreaElement).value;
+      });
+
+      ['sig-gerlieva', 'sig-kunde'].forEach(id => {
+        if (sigData[id]) data.signatures[id] = sigData[id];
+      });
+
+      ['name-gerlieva', 'name-kunde'].forEach(id => {
+        const el = document.getElementById(id) as HTMLInputElement;
+        if (el) data[id] = el.value;
+      });
+
+      return data;
+    };
+
+    // Apply form data
+    const applyFormData = (data: any) => {
+      if (!data || data.version !== 1) {
+        showToast('Ungültige JSON-Datei', 'error');
+        return;
+      }
+
+      const inputs = document.querySelectorAll('input[type="text"],input[type="number"],input[type="time"],input[type="date"]');
+      inputs.forEach((inp, i) => {
+        if (data.inputs && data.inputs[i] !== undefined) {
+          (inp as HTMLInputElement).value = data.inputs[i];
+        }
+      });
+
+      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach((cb, i) => {
+        if (data.checkboxes && data.checkboxes[i] !== undefined) {
+          (cb as HTMLInputElement).checked = data.checkboxes[i];
+        }
+      });
+
+      const textareas = document.querySelectorAll('textarea');
+      textareas.forEach((ta, i) => {
+        if (data.textareas && data.textareas[i] !== undefined) {
+          (ta as HTMLTextAreaElement).value = data.textareas[i];
+        }
+      });
+
+      ['sig-gerlieva', 'sig-kunde'].forEach(id => {
+        if (data.signatures && data.signatures[id]) {
+          sigData[id] = data.signatures[id];
+          setTimeout(() => redrawPreviewCanvas(id), 300);
+        }
+      });
+
+      ['name-gerlieva', 'name-kunde'].forEach(id => {
+        const el = document.getElementById(id) as HTMLInputElement;
+        if (el && data[id] !== undefined) el.value = data[id];
+      });
+    };
+
+    // Get filename
+    const getFileName = (ext: string) => {
+      const kunde = ((document.querySelectorAll('.grid-row input')[0] as HTMLInputElement)?.value || '').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
+      const datum = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      return (kunde ? `Servicebericht_${kunde}_${datum}` : `Servicebericht_${datum}`) + '.' + ext;
+    };
+
+    // Open signature modal
+    const openSigModal = (id: string, label: string) => {
+      const overlay = document.createElement('div');
+      overlay.id = 'sig-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;';
+      overlay.innerHTML = `
+        <div style="background:#1a2744;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+          <span style="font-size:13pt;font-weight:bold;flex:1;">✍️ ${label}</span>
+          <button id="sig-clear-btn" style="background:#e8460a;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:11pt;cursor:pointer;margin-right:8px;">🗑 Löschen</button>
+          <button id="sig-cancel-btn" style="background:#888;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:11pt;cursor:pointer;margin-right:8px;">Abbrechen</button>
+          <button id="sig-ok-btn" style="background:#2a7a2a;color:#fff;border:none;padding:8px 20px;border-radius:4px;font-size:11pt;font-weight:bold;cursor:pointer;">✓ Bestätigen</button>
+        </div>
+        <div style="flex:1;padding:8px;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
+          <canvas id="sig-modal-canvas" style="background:white;border:2px solid #aaa;border-radius:4px;touch-action:none;cursor:crosshair;max-width:100%;max-height:100%;"></canvas>
+        </div>
+        <div style="text-align:center;padding:6px;font-size:8pt;color:#666;flex-shrink:0;">Hier unterschreiben</div>`;
+      document.body.appendChild(overlay);
+
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().then(() => {
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+          }
+        }).catch(() => {});
+      }
+
+      const modalCanvas = document.getElementById('sig-modal-canvas') as HTMLCanvasElement;
+      const dpr = window.devicePixelRatio || 1;
+
+      const resizeModalCanvas = () => {
+        const container = modalCanvas.parentElement;
+        if (!container) return;
+        const w = container.clientWidth - 16;
+        const h = container.clientHeight - 16;
+        const tmp = document.createElement('canvas');
+        tmp.width = modalCanvas.width;
+        tmp.height = modalCanvas.height;
+        const tmpCtx = tmp.getContext('2d');
+        if (tmpCtx) tmpCtx.drawImage(modalCanvas, 0, 0);
+        modalCanvas.width = Math.round(w * dpr);
+        modalCanvas.height = Math.round(h * dpr);
+        modalCanvas.style.width = w + 'px';
+        modalCanvas.style.height = h + 'px';
+        const ctx = modalCanvas.getContext('2d');
+        if (ctx) {
+          ctx.scale(dpr, dpr);
+          ctx.drawImage(tmp, 0, 0, w, h);
+        }
+      };
+
+      setTimeout(resizeModalCanvas, 150);
+      window.addEventListener('resize', resizeModalCanvas);
+
+      if (sigData[id]) {
+        setTimeout(() => {
+          const img = new Image();
+          img.onload = () => {
+            const ctx = modalCanvas.getContext('2d');
+            if (ctx) ctx.drawImage(img, 0, 0, modalCanvas.width, modalCanvas.height);
+          };
+          img.src = sigData[id];
+        }, 200);
+      }
+
+      const mCtx = modalCanvas.getContext('2d');
+      if (!mCtx) return;
+      let drawing = false;
+
+      const mPos = (e: MouseEvent | TouchEvent) => {
+        const r = modalCanvas.getBoundingClientRect();
+        const src = 'touches' in e ? e.touches[0] : e;
+        return { x: src.clientX - r.left, y: src.clientY - r.top };
+      };
+
+      const mStart = (e: MouseEvent | TouchEvent) => {
+        e.preventDefault();
+        drawing = true;
+        const p = mPos(e);
+        mCtx.beginPath();
+        mCtx.moveTo(p.x, p.y);
+      };
+
+      const mMove = (e: MouseEvent | TouchEvent) => {
+        e.preventDefault();
+        if (!drawing) return;
+        const p = mPos(e);
+        mCtx.lineTo(p.x, p.y);
+        mCtx.strokeStyle = '#000';
+        mCtx.lineWidth = 2;
+        mCtx.lineCap = 'round';
+        mCtx.lineJoin = 'round';
+        mCtx.stroke();
+      };
+
+      const mStop = () => {
+        drawing = false;
+        mCtx.closePath();
+      };
+
+      modalCanvas.addEventListener('mousedown', mStart as any);
+      modalCanvas.addEventListener('mousemove', mMove as any);
+      modalCanvas.addEventListener('mouseup', mStop);
+      modalCanvas.addEventListener('mouseleave', mStop);
+      modalCanvas.addEventListener('touchstart', mStart as any, { passive: false });
+      modalCanvas.addEventListener('touchmove', mMove as any, { passive: false });
+      modalCanvas.addEventListener('touchend', mStop);
+
+      const closeModal = (save: boolean) => {
+        if (save) {
+          sigData[id] = modalCanvas.toDataURL('image/png');
+        }
+        window.removeEventListener('resize', resizeModalCanvas);
+        overlay.remove();
+        const doRedraw = () => {
+          if (save) setTimeout(() => redrawPreviewCanvas(id), 350);
+        };
+        if (document.fullscreenElement) {
+          document.exitFullscreen().then(() => {
+            if (screen.orientation && (screen.orientation as any).unlock) (screen.orientation as any).unlock();
+            doRedraw();
+          }).catch(() => doRedraw());
+        } else {
+          if (screen.orientation && (screen.orientation as any).unlock) (screen.orientation as any).unlock();
+          doRedraw();
+        }
+      };
+
+      document.getElementById('sig-clear-btn')!.onclick = () => mCtx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
+      document.getElementById('sig-cancel-btn')!.onclick = () => closeModal(false);
+      document.getElementById('sig-ok-btn')!.onclick = () => closeModal(true);
+    };
+
+    // Initialize signature canvases
+    ['sig-gerlieva', 'sig-kunde'].forEach(id => {
+      const canvas = document.getElementById(id) as HTMLCanvasElement;
+      if (!canvas) return;
+      const label = id === 'sig-gerlieva' ? 'Unterschrift GERLIEVA' : 'Unterschrift Kunde';
+      redrawPreviewCanvas(id);
+      canvas.addEventListener('click', () => openSigModal(id, label));
+      canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        openSigModal(id, label);
+      }, { passive: false });
+
+      // Clear button
+      const clearBtn = canvas.nextElementSibling?.querySelector('button');
+      if (clearBtn) {
+        clearBtn.onclick = () => clearSig(id);
+      }
+    });
+
+    // Resize handler
+    const onResize = () => {
+      setTimeout(() => {
+        redrawPreviewCanvas('sig-gerlieva');
+        redrawPreviewCanvas('sig-kunde');
+      }, 200);
+    };
+    window.addEventListener('resize', onResize);
+    if (screen.orientation) screen.orientation.addEventListener('change', onResize);
+
+    // Button handlers
+    const btnPdf = document.getElementById('btn-pdf');
+    if (btnPdf) {
+      btnPdf.addEventListener('click', () => {
+        alert('Im Druckdialog:\n1. Drucker → "Als PDF speichern"\n2. Weitere Einstellungen → "Hintergrundgrafiken" ✓ aktivieren\n→ Dann sind alle Farben im PDF enthalten.');
+        window.print();
+      });
+    }
+
+    const btnSave = document.getElementById('btn-save');
+    if (btnSave) {
+      btnSave.addEventListener('click', () => {
+        const btn = btnSave as HTMLButtonElement;
+        btn.disabled = true;
+        btn.textContent = '⏳ Wird gespeichert…';
+        try {
+          const json = JSON.stringify(collectFormData(), null, 2);
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = getFileName('json');
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+          showToast('✅ JSON gespeichert!', 'success');
+        } catch (err: any) {
+          showToast('Fehler: ' + err.message, 'error');
+        }
+        btn.disabled = false;
+        btn.textContent = '💾 JSON speichern';
+      });
+    }
+
+    const btnShare = document.getElementById('btn-share');
+    if (btnShare) {
+      btnShare.addEventListener('click', async () => {
+        const btn = btnShare as HTMLButtonElement;
+        btn.disabled = true;
+        btn.textContent = '⏳ Wird vorbereitet…';
+        try {
+          const json = JSON.stringify(collectFormData(), null, 2);
+          const blob = new Blob([json], { type: 'application/json' });
+          const file = new File([blob], getFileName('json'), { type: 'application/json' });
+          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ title: 'Servicebericht GERLIEVA', files: [file] });
+          } else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = getFileName('json');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            showToast('✅ JSON heruntergeladen!', 'success');
+          }
+        } catch (err: any) {
+          if (err.name !== 'AbortError') showToast('Fehler: ' + err.message, 'error');
+        }
+        btn.disabled = false;
+        btn.textContent = '📤 JSON teilen';
+      });
+    }
+
+    const btnLoad = document.getElementById('btn-load');
+    const loadInput = document.getElementById('load-input') as HTMLInputElement;
+    if (btnLoad && loadInput) {
+      btnLoad.addEventListener('click', () => loadInput.click());
+      loadInput.addEventListener('change', (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target?.result as string);
+            applyFormData(data);
+            showToast('✅ Datei erfolgreich geladen!', 'success');
+          } catch (err: any) {
+            showToast('Fehler beim Laden: ' + err.message, 'error');
+          }
+        };
+        reader.readAsText(file);
+        loadInput.value = '';
+      });
+    }
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', onResize);
+      if (screen.orientation) screen.orientation.removeEventListener('change', onResize);
+    };
+  }, []);
+
   return (
     <>
       <SEO 
@@ -108,7 +507,7 @@ export default function ServiceBericht() {
           <span>Servicebericht · GERLIEVA Sprühtechnik GmbH</span>
           <button className="tbtn" style={{ background: "#1a5fa8", marginLeft: "auto" }} onClick={() => window.location.href = '/'}>🏠 Home</button>
         </div>
-        <input type="file" id="load-input" accept=".json" style={{ display: "none" }} />
+        <input type="file" id="load-input" ref={loadInputRef} accept=".json" style={{ display: "none" }} />
 
         <div className="header">
           <h1>GERLIEVA Sprühtechnik GmbH</h1>
@@ -373,26 +772,28 @@ export default function ServiceBericht() {
               <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>Unterschrift GERLIEVA</div>
               <canvas 
                 id="sig-gerlieva"
+                ref={sigGerlievaRef}
                 style={{ border: "2px dashed #999", background: "white", cursor: "pointer", width: "100%", aspectRatio: "4/1", borderRadius: "3px", display: "block", touchAction: "none" }}
                 width={400} 
                 height={100}
               ></canvas>
               <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <input type="text" id="name-gerlieva" placeholder="Name Techniker" style={{ flex: 1, border: "none", borderBottom: "1px solid #aaa", outline: "none", fontSize: "11px", background: "transparent" }} />
-                <button onClick={() => (window as any).clearSig?.('sig-gerlieva')} style={{ fontSize: "9px", padding: "2px 6px", background: "#eee", border: "1px solid #bbb", borderRadius: "3px", cursor: "pointer" }}>✕ Löschen</button>
+                <button style={{ fontSize: "9px", padding: "2px 6px", background: "#eee", border: "1px solid #bbb", borderRadius: "3px", cursor: "pointer" }}>✕ Löschen</button>
               </div>
             </div>
             <div style={{ flex: 1, border: "1px solid #ccc", borderRadius: "4px", padding: "8px", background: "#fafafa" }}>
               <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>Unterschrift Kunde</div>
               <canvas 
                 id="sig-kunde"
+                ref={sigKundeRef}
                 style={{ border: "2px dashed #999", background: "white", cursor: "pointer", width: "100%", aspectRatio: "4/1", borderRadius: "3px", display: "block", touchAction: "none" }}
                 width={400} 
                 height={100}
               ></canvas>
               <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <input type="text" id="name-kunde" placeholder="Name Kunde" style={{ flex: 1, border: "none", borderBottom: "1px solid #aaa", outline: "none", fontSize: "11px", background: "transparent" }} />
-                <button onClick={() => (window as any).clearSig?.('sig-kunde')} style={{ fontSize: "9px", padding: "2px 6px", background: "#eee", border: "1px solid #bbb", borderRadius: "3px", cursor: "pointer" }}>✕ Löschen</button>
+                <button style={{ fontSize: "9px", padding: "2px 6px", background: "#eee", border: "1px solid #bbb", borderRadius: "3px", cursor: "pointer" }}>✕ Löschen</button>
               </div>
             </div>
           </div>
@@ -401,257 +802,6 @@ export default function ServiceBericht() {
           </div>
         </div>
       </div>
-
-      <script dangerouslySetInnerHTML={{ __html: `
-        function showToast(msg, type) {
-          const toast = document.createElement('div');
-          toast.className = 'toast ' + (type || '');
-          toast.textContent = msg;
-          document.body.appendChild(toast);
-          setTimeout(() => toast.classList.add('show'), 100);
-          setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
-        }
-
-        function collectFormData() {
-          const data = { version: 1, ts: new Date().toISOString(), inputs: {}, checkboxes: {}, textareas: {}, signatures: {} };
-          document.querySelectorAll('input[type="text"],input[type="number"],input[type="time"],input[type="date"]').forEach((inp, i) => {
-            data.inputs[i] = inp.value;
-          });
-          document.querySelectorAll('input[type="checkbox"]').forEach((inp, i) => {
-            data.checkboxes[i] = inp.checked;
-          });
-          document.querySelectorAll('textarea').forEach((ta, i) => {
-            data.textareas[i] = ta.value;
-          });
-          ['sig-gerlieva','sig-kunde'].forEach(id => {
-            if (window.sigData && window.sigData[id]) data.signatures[id] = window.sigData[id];
-          });
-          ['name-gerlieva','name-kunde'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) data[id] = el.value;
-          });
-          return data;
-        }
-
-        function applyFormData(data) {
-          if (!data || data.version !== 1) { showToast('Ungültige JSON-Datei', 'error'); return; }
-          const inputs = document.querySelectorAll('input[type="text"],input[type="number"],input[type="time"],input[type="date"]');
-          inputs.forEach((inp, i) => { if (data.inputs && data.inputs[i] !== undefined) inp.value = data.inputs[i]; });
-          const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-          checkboxes.forEach((cb, i) => { if (data.checkboxes && data.checkboxes[i] !== undefined) cb.checked = data.checkboxes[i]; });
-          const textareas = document.querySelectorAll('textarea');
-          textareas.forEach((ta, i) => { if (data.textareas && data.textareas[i] !== undefined) ta.value = data.textareas[i]; });
-          ['sig-gerlieva','sig-kunde'].forEach(id => {
-            if (data.signatures && data.signatures[id]) {
-              if (!window.sigData) window.sigData = {};
-              window.sigData[id] = data.signatures[id];
-              setTimeout(() => window.redrawPreviewCanvas && window.redrawPreviewCanvas(id), 300);
-            }
-          });
-          ['name-gerlieva','name-kunde'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el && data[id] !== undefined) el.value = data[id];
-          });
-        }
-
-        window.sigData = {};
-
-        window.clearSig = function(id) {
-          const c = document.getElementById(id);
-          if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
-          if (window.sigData) delete window.sigData[id];
-        }
-
-        function openSigModal(id, label) {
-          const overlay = document.createElement('div');
-          overlay.id = 'sig-overlay';
-          overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;';
-          overlay.innerHTML = \`
-            <div style="background:#1a2744;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
-              <span style="font-size:13pt;font-weight:bold;flex:1;">✍️ \${label}</span>
-              <button id="sig-clear-btn" style="background:#e8460a;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:11pt;cursor:pointer;margin-right:8px;">🗑 Löschen</button>
-              <button id="sig-cancel-btn" style="background:#888;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:11pt;cursor:pointer;margin-right:8px;">Abbrechen</button>
-              <button id="sig-ok-btn" style="background:#2a7a2a;color:#fff;border:none;padding:8px 20px;border-radius:4px;font-size:11pt;font-weight:bold;cursor:pointer;">✓ Bestätigen</button>
-            </div>
-            <div style="flex:1;padding:8px;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
-              <canvas id="sig-modal-canvas" style="background:white;border:2px solid #aaa;border-radius:4px;touch-action:none;cursor:crosshair;max-width:100%;max-height:100%;"></canvas>
-            </div>
-            <div style="text-align:center;padding:6px;font-size:8pt;color:#666;flex-shrink:0;">Hier unterschreiben</div>\`;
-          document.body.appendChild(overlay);
-
-          if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().then(() => {
-              if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
-            }).catch(() => {});
-          }
-
-          const modalCanvas = document.getElementById('sig-modal-canvas');
-          const dpr = window.devicePixelRatio || 1;
-
-          function resizeModalCanvas() {
-            const container = modalCanvas.parentElement;
-            const w = container.clientWidth - 16, h = container.clientHeight - 16;
-            const tmp = document.createElement('canvas');
-            tmp.width = modalCanvas.width; tmp.height = modalCanvas.height;
-            tmp.getContext('2d').drawImage(modalCanvas, 0, 0);
-            modalCanvas.width = Math.round(w * dpr); modalCanvas.height = Math.round(h * dpr);
-            modalCanvas.style.width = w + 'px'; modalCanvas.style.height = h + 'px';
-            const ctx = modalCanvas.getContext('2d');
-            ctx.scale(dpr, dpr);
-            ctx.drawImage(tmp, 0, 0, w, h);
-          }
-          setTimeout(resizeModalCanvas, 150);
-          window.addEventListener('resize', resizeModalCanvas);
-
-          if (window.sigData && window.sigData[id]) {
-            setTimeout(() => {
-              const img = new Image();
-              img.onload = () => modalCanvas.getContext('2d').drawImage(img, 0, 0, modalCanvas.width, modalCanvas.height);
-              img.src = window.sigData[id];
-            }, 200);
-          }
-
-          const mCtx = modalCanvas.getContext('2d');
-          let drawing = false;
-          function mPos(e) {
-            const r = modalCanvas.getBoundingClientRect();
-            const src = e.touches ? e.touches[0] : e;
-            return { x: src.clientX - r.left, y: src.clientY - r.top };
-          }
-          function mStart(e) { e.preventDefault(); drawing = true; const p = mPos(e); mCtx.beginPath(); mCtx.moveTo(p.x, p.y); }
-          function mMove(e)  { e.preventDefault(); if (!drawing) return; const p = mPos(e); mCtx.lineTo(p.x, p.y); mCtx.strokeStyle='#000'; mCtx.lineWidth=2; mCtx.lineCap='round'; mCtx.lineJoin='round'; mCtx.stroke(); }
-          function mStop()   { drawing = false; mCtx.closePath(); }
-          modalCanvas.addEventListener('mousedown', mStart);
-          modalCanvas.addEventListener('mousemove', mMove);
-          modalCanvas.addEventListener('mouseup', mStop);
-          modalCanvas.addEventListener('mouseleave', mStop);
-          modalCanvas.addEventListener('touchstart', mStart, { passive: false });
-          modalCanvas.addEventListener('touchmove', mMove, { passive: false });
-          modalCanvas.addEventListener('touchend', mStop);
-
-          document.getElementById('sig-clear-btn').onclick = () => mCtx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
-          document.getElementById('sig-cancel-btn').onclick = () => closeModal(false, id, modalCanvas);
-          document.getElementById('sig-ok-btn').onclick = () => closeModal(true, id, modalCanvas);
-        }
-
-        function closeModal(save, id, modalCanvas) {
-          if (save) {
-            if (!window.sigData) window.sigData = {};
-            window.sigData[id] = modalCanvas.toDataURL('image/png');
-          }
-          window.removeEventListener('resize', () => {});
-          const overlay = document.getElementById('sig-overlay');
-          if (overlay) overlay.remove();
-          const doRedraw = () => { if (save) setTimeout(() => window.redrawPreviewCanvas && window.redrawPreviewCanvas(id), 350); };
-          if (document.fullscreenElement) {
-            document.exitFullscreen().then(() => { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); doRedraw(); }).catch(() => doRedraw());
-          } else {
-            if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
-            doRedraw();
-          }
-        }
-
-        window.redrawPreviewCanvas = function(id) {
-          const canvas = document.getElementById(id);
-          if (!canvas) return;
-          const dpr = window.devicePixelRatio || 1;
-          const rect = canvas.getBoundingClientRect();
-          const w = rect.width || canvas.offsetWidth || 300;
-          const h = rect.height || canvas.offsetHeight || 90;
-          canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
-          canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-          const ctx = canvas.getContext('2d');
-          ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr, dpr);
-          if (window.sigData && window.sigData[id]) {
-            const img = new Image();
-            img.onload = () => ctx.drawImage(img, 0, 0, w, h);
-            img.src = window.sigData[id];
-          } else {
-            ctx.fillStyle = '#bbb'; ctx.font = '11px Arial'; ctx.textAlign = 'center';
-            ctx.fillText('Tippen zum Unterschreiben', w / 2, h / 2);
-          }
-        }
-
-        function getFileName(ext) {
-          const kunde = (document.querySelectorAll('.grid-row input')[0]?.value || '').trim().replace(/[^a-zA-Z0-9_\\-]/g, '_');
-          const datum = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-          return (kunde ? \`Servicebericht_\${kunde}_\${datum}\` : \`Servicebericht_\${datum}\`) + '.' + ext;
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-          ['sig-gerlieva', 'sig-kunde'].forEach(id => {
-            const canvas = document.getElementById(id);
-            if (!canvas) return;
-            const label = id === 'sig-gerlieva' ? 'Unterschrift GERLIEVA' : 'Unterschrift Kunde';
-            window.redrawPreviewCanvas(id);
-            canvas.addEventListener('click', () => openSigModal(id, label));
-            canvas.addEventListener('touchend', (e) => { e.preventDefault(); openSigModal(id, label); }, { passive: false });
-          });
-          function onResize() {
-            setTimeout(() => { window.redrawPreviewCanvas('sig-gerlieva'); window.redrawPreviewCanvas('sig-kunde'); }, 200);
-          }
-          window.addEventListener('resize', onResize);
-          if (screen.orientation) screen.orientation.addEventListener('change', onResize);
-
-          document.getElementById('btn-pdf').addEventListener('click', () => {
-            alert('Im Druckdialog:\\n1. Drucker → "Als PDF speichern"\\n2. Weitere Einstellungen → "Hintergrundgrafiken" ✓ aktivieren\\n→ Dann sind alle Farben im PDF enthalten.');
-            window.print();
-          });
-
-          document.getElementById('btn-save').addEventListener('click', () => {
-            const btn = document.getElementById('btn-save');
-            btn.disabled = true; btn.textContent = '⏳ Wird gespeichert…';
-            try {
-              const json = JSON.stringify(collectFormData(), null, 2);
-              const blob = new Blob([json], { type: 'application/json' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a'); a.href = url; a.download = getFileName('json');
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              setTimeout(() => URL.revokeObjectURL(url), 2000);
-              showToast('✅ JSON gespeichert!', 'success');
-            } catch (err) { showToast('Fehler: ' + err.message, 'error'); }
-            btn.disabled = false; btn.textContent = '💾 JSON speichern';
-          });
-
-          document.getElementById('btn-share').addEventListener('click', async () => {
-            const btn = document.getElementById('btn-share');
-            btn.disabled = true; btn.textContent = '⏳ Wird vorbereitet…';
-            try {
-              const json = JSON.stringify(collectFormData(), null, 2);
-              const blob = new Blob([json], { type: 'application/json' });
-              const file = new File([blob], getFileName('json'), { type: 'application/json' });
-              if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({ title: 'Servicebericht GERLIEVA', files: [file] });
-              } else {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = getFileName('json');
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(url), 2000);
-                showToast('✅ JSON heruntergeladen!', 'success');
-              }
-            } catch (err) { if (err.name !== 'AbortError') showToast('Fehler: ' + err.message, 'error'); }
-            btn.disabled = false; btn.textContent = '📤 JSON teilen';
-          });
-
-          document.getElementById('btn-load') && document.getElementById('btn-load').addEventListener('click', function(){
-            document.getElementById('load-input').click();
-          });
-          document.getElementById('load-input') && document.getElementById('load-input').addEventListener('change', function(e){
-            var file = e.target.files[0];
-            if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function(ev){
-              try {
-                const data = JSON.parse(ev.target.result);
-                applyFormData(data);
-                showToast('✅ Datei erfolgreich geladen!', 'success');
-              } catch(err) { showToast('Fehler beim Laden: ' + err.message, 'error'); }
-            };
-            reader.readAsText(file);
-            e.target.value = '';
-          });
-        });
-      ` }} />
     </>
   );
 }
