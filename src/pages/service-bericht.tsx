@@ -143,15 +143,41 @@ export default function ServiceBericht() {
               </tr>
             </thead>
             <tbody>
-              {[...Array(5)].map((_, i) => (
-                <tr key={i}>
-                  <td><input type="text" defaultValue="" /></td>
-                  <td><input type="text" defaultValue="" /></td>
-                  <td><input type="text" defaultValue="" /></td>
-                  <td><input type="text" defaultValue="" /></td>
-                  <td><input type="text" defaultValue="" /></td>
-                </tr>
-              ))}
+              <tr>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+              </tr>
+              <tr>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+              </tr>
+              <tr>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+              </tr>
+              <tr>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+              </tr>
+              <tr>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+                <td><input type="text" defaultValue="" /></td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -213,21 +239,97 @@ export default function ServiceBericht() {
                 </tr>
               </thead>
               <tbody>
-                {[...Array(7)].map((_, i) => (
-                  <tr key={i}>
-                    <td style={{ textAlign: "center" }}>{i + 1}</td>
-                    <td><input type="date" defaultValue="" /></td>
-                    <td><input type="time" defaultValue="" /></td>
-                    <td><input type="time" defaultValue="" /></td>
-                    <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                    <td><input type="time" defaultValue="" /></td>
-                    <td><input type="time" defaultValue="" /></td>
-                    <td><input type="time" defaultValue="" /></td>
-                    <td><input type="time" defaultValue="" /></td>
-                    <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                    <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
-                  </tr>
-                ))}
+                <tr>
+                  <td style={{ textAlign: "center" }}>1</td>
+                  <td><input type="date" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: "center" }}>2</td>
+                  <td><input type="date" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: "center" }}>3</td>
+                  <td><input type="date" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: "center" }}>4</td>
+                  <td><input type="date" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: "center" }}>5</td>
+                  <td><input type="date" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: "center" }}>6</td>
+                  <td><input type="date" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: "center" }}>7</td>
+                  <td><input type="date" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="time" defaultValue="" /></td>
+                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
+                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
+                </tr>
               </tbody>
             </table>
           </div>
