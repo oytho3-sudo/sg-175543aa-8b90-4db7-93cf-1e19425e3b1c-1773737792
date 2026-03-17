@@ -165,8 +165,8 @@ export default function ServiceBericht() {
 
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().then(() => {
-          if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
+          if (screen.orientation && (screen.orientation as any).lock) {
+            (screen.orientation as any).lock('landscape').catch(() => {});
           }
         }).catch(() => {});
       }
