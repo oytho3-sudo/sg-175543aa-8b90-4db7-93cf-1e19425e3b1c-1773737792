@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -365,7 +366,7 @@ export default function ServiceberichtPage() {
         <button onClick={handleShare} style={{ ...s.tbtn, background: '#1a7a3a' }}>📤 JSON teilen</button>
         <button onClick={handleSave} style={{ ...s.tbtn, background: '#1a5fa8' }}>💾 JSON speichern</button>
         <span style={{ color: '#a8b8d8', fontSize: 9 }}>Servicebericht · GERLIEVA Sprühtechnik GmbH</span>
-        <a href="/" style={{ ...s.tbtn, background: '#1a5fa8', marginLeft: 'auto', textDecoration: 'none' }}>🏠 Home</a>
+        <Link href="/" style={{ ...s.tbtn, background: '#1a5fa8', marginLeft: 'auto', textDecoration: 'none' }}>🏠 Home</Link>
         <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoad} />
       </div>
 
