@@ -1,807 +1,666 @@
-import { SEO } from "@/components/SEO";
-import Head from "next/head";
-import { useEffect, useRef } from "react";
+'use client';
 
-export default function ServiceBericht() {
-  const sigGerlievaRef = useRef<HTMLCanvasElement>(null);
-  const sigKundeRef = useRef<HTMLCanvasElement>(null);
-  const loadInputRef = useRef<HTMLInputElement>(null);
+import { useRef, useState, useEffect, useCallback } from 'react';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface MaschineRow {
+  nr: string; typ: string; maschinenNr: string; kundenNr: string; komNr: string;
+}
+
+interface ZeitRow {
+  datum: string;
+  anreiseVon: string; anreiseBis: string; anreiseKm: string;
+  arbeitVon: string; arbeitBis: string;
+  rueckreiseVon: string; rueckreiseBis: string; rueckreiseKm: string;
+  pauseMin: string;
+}
+
+interface MaterialRow {
+  pos: string; beschreibung: string; teilenummer: string; stk: string;
+}
+
+interface FormData {
+  version: number;
+  ts: string;
+  // Kunde
+  kundeName: string; kundeStrasse: string; kundeTelefon: string; kundeReferenz: string;
+  servicetechniker: string;
+  // Maschine
+  maschinen: MaschineRow[];
+  // Durchgeführte Arbeiten
+  arbeitenChecks: Record<string, boolean>;
+  arbeitenSonstiges: string;
+  // Reise
+  reiseChecks: Record<string, boolean>;
+  zeiten: ZeitRow[];
+  // Material
+  material: MaterialRow[];
+  // Bemerkungen
+  bemerkungen: string;
+  // Unterschriften
+  nameGerlieva: string;
+  nameKunde: string;
+  signatureDate: string;
+  signatures: { 'sig-gerlieva'?: string; 'sig-kunde'?: string };
+}
+
+// ─── Initial state ─────────────────────────────────────────────────────────────
+
+const emptyMaschine = (): MaschineRow => ({ nr: '', typ: '', maschinenNr: '', kundenNr: '', komNr: '' });
+const emptyZeit = (): ZeitRow => ({
+  datum: '', anreiseVon: '', anreiseBis: '', anreiseKm: '',
+  arbeitVon: '', arbeitBis: '', rueckreiseVon: '', rueckreiseBis: '', rueckreiseKm: '', pauseMin: '',
+});
+const emptyMaterial = (): MaterialRow => ({ pos: '', beschreibung: '', teilenummer: '', stk: '' });
+
+const initialForm = (): FormData => ({
+  version: 1, ts: '',
+  kundeName: '', kundeStrasse: '', kundeTelefon: '', kundeReferenz: '',
+  servicetechniker: '',
+  maschinen: Array.from({ length: 4 }, emptyMaschine),
+  arbeitenChecks: { Montage: false, Inbetriebnahme: false, Softwareupdate: false, Wartung: false, Reparatur: false },
+  arbeitenSonstiges: '',
+  reiseChecks: { PKW: false, Flugzeug: false, Zug: false, Hotel: false, Sonstiges: false },
+  zeiten: Array.from({ length: 7 }, emptyZeit),
+  material: Array.from({ length: 15 }, emptyMaterial),
+  bemerkungen: '',
+  nameGerlieva: '', nameKunde: '', signatureDate: '',
+  signatures: {},
+});
+
+// ─── Signature Modal ───────────────────────────────────────────────────────────
+
+interface SigModalProps {
+  label: string;
+  existing?: string;
+  onClose: (dataUrl?: string) => void;
+}
+
+function SignatureModal({ label, existing, onClose }: SigModalProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawing = useRef(false);
 
   useEffect(() => {
-    // Signature data storage
-    const sigData: Record<string, string> = {};
-
-    // Toast function
-    const showToast = (msg: string, type?: string) => {
-      const toast = document.createElement('div');
-      toast.className = 'toast ' + (type || '');
-      toast.textContent = msg;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.classList.add('show'), 100);
-      setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-      }, 3000);
-    };
-
-    // Clear signature function
-    const clearSig = (id: string) => {
-      const canvas = document.getElementById(id) as HTMLCanvasElement;
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-      delete sigData[id];
-    };
-
-    // Redraw preview canvas
-    const redrawPreviewCanvas = (id: string) => {
-      const canvas = document.getElementById(id) as HTMLCanvasElement;
-      if (!canvas) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const resize = () => {
+      const container = canvas.parentElement!;
       const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      const w = rect.width || canvas.offsetWidth || 300;
-      const h = rect.height || canvas.offsetHeight || 90;
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
-      canvas.style.width = w + 'px';
-      canvas.style.height = h + 'px';
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      const w = container.clientWidth - 16;
+      const h = container.clientHeight - 16;
+      const tmp = document.createElement('canvas');
+      tmp.width = canvas.width; tmp.height = canvas.height;
+      tmp.getContext('2d')!.drawImage(canvas, 0, 0);
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      const ctx = canvas.getContext('2d')!;
       ctx.scale(dpr, dpr);
-      if (sigData[id]) {
-        const img = new Image();
-        img.onload = () => ctx.drawImage(img, 0, 0, w, h);
-        img.src = sigData[id];
-      } else {
-        ctx.fillStyle = '#bbb';
-        ctx.font = '11px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('Tippen zum Unterschreiben', w / 2, h / 2);
-      }
+      ctx.drawImage(tmp, 0, 0, w, h);
     };
-
-    // Collect form data
-    const collectFormData = () => {
-      const data: any = {
-        version: 1,
-        ts: new Date().toISOString(),
-        inputs: {},
-        checkboxes: {},
-        textareas: {},
-        signatures: {}
-      };
-
-      document.querySelectorAll('input[type="text"],input[type="number"],input[type="time"],input[type="date"]').forEach((inp, i) => {
-        data.inputs[i] = (inp as HTMLInputElement).value;
-      });
-
-      document.querySelectorAll('input[type="checkbox"]').forEach((inp, i) => {
-        data.checkboxes[i] = (inp as HTMLInputElement).checked;
-      });
-
-      document.querySelectorAll('textarea').forEach((ta, i) => {
-        data.textareas[i] = (ta as HTMLTextAreaElement).value;
-      });
-
-      ['sig-gerlieva', 'sig-kunde'].forEach(id => {
-        if (sigData[id]) data.signatures[id] = sigData[id];
-      });
-
-      ['name-gerlieva', 'name-kunde'].forEach(id => {
-        const el = document.getElementById(id) as HTMLInputElement;
-        if (el) data[id] = el.value;
-      });
-
-      return data;
-    };
-
-    // Apply form data
-    const applyFormData = (data: any) => {
-      if (!data || data.version !== 1) {
-        showToast('Ungültige JSON-Datei', 'error');
-        return;
-      }
-
-      const inputs = document.querySelectorAll('input[type="text"],input[type="number"],input[type="time"],input[type="date"]');
-      inputs.forEach((inp, i) => {
-        if (data.inputs && data.inputs[i] !== undefined) {
-          (inp as HTMLInputElement).value = data.inputs[i];
-        }
-      });
-
-      const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-      checkboxes.forEach((cb, i) => {
-        if (data.checkboxes && data.checkboxes[i] !== undefined) {
-          (cb as HTMLInputElement).checked = data.checkboxes[i];
-        }
-      });
-
-      const textareas = document.querySelectorAll('textarea');
-      textareas.forEach((ta, i) => {
-        if (data.textareas && data.textareas[i] !== undefined) {
-          (ta as HTMLTextAreaElement).value = data.textareas[i];
-        }
-      });
-
-      ['sig-gerlieva', 'sig-kunde'].forEach(id => {
-        if (data.signatures && data.signatures[id]) {
-          sigData[id] = data.signatures[id];
-          setTimeout(() => redrawPreviewCanvas(id), 300);
-        }
-      });
-
-      ['name-gerlieva', 'name-kunde'].forEach(id => {
-        const el = document.getElementById(id) as HTMLInputElement;
-        if (el && data[id] !== undefined) el.value = data[id];
-      });
-    };
-
-    // Get filename
-    const getFileName = (ext: string) => {
-      const kunde = ((document.querySelectorAll('.grid-row input')[0] as HTMLInputElement)?.value || '').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
-      const datum = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      return (kunde ? `Servicebericht_${kunde}_${datum}` : `Servicebericht_${datum}`) + '.' + ext;
-    };
-
-    // Open signature modal
-    const openSigModal = (id: string, label: string) => {
-      const overlay = document.createElement('div');
-      overlay.id = 'sig-overlay';
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;';
-      overlay.innerHTML = `
-        <div style="background:#1a2744;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;">
-          <span style="font-size:13pt;font-weight:bold;flex:1;">✍️ ${label}</span>
-          <button id="sig-clear-btn" style="background:#e8460a;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:11pt;cursor:pointer;margin-right:8px;">🗑 Löschen</button>
-          <button id="sig-cancel-btn" style="background:#888;color:#fff;border:none;padding:8px 16px;border-radius:4px;font-size:11pt;cursor:pointer;margin-right:8px;">Abbrechen</button>
-          <button id="sig-ok-btn" style="background:#2a7a2a;color:#fff;border:none;padding:8px 20px;border-radius:4px;font-size:11pt;font-weight:bold;cursor:pointer;">✓ Bestätigen</button>
-        </div>
-        <div style="flex:1;padding:8px;display:flex;align-items:center;justify-content:center;background:#f0f0f0;">
-          <canvas id="sig-modal-canvas" style="background:white;border:2px solid #aaa;border-radius:4px;touch-action:none;cursor:crosshair;max-width:100%;max-height:100%;"></canvas>
-        </div>
-        <div style="text-align:center;padding:6px;font-size:8pt;color:#666;flex-shrink:0;">Hier unterschreiben</div>`;
-      document.body.appendChild(overlay);
-
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().then(() => {
-          if (screen.orientation && (screen.orientation as any).lock) {
-            (screen.orientation as any).lock('landscape').catch(() => {});
-          }
-        }).catch(() => {});
-      }
-
-      const modalCanvas = document.getElementById('sig-modal-canvas') as HTMLCanvasElement;
-      const dpr = window.devicePixelRatio || 1;
-
-      const resizeModalCanvas = () => {
-        const container = modalCanvas.parentElement;
-        if (!container) return;
-        const w = container.clientWidth - 16;
-        const h = container.clientHeight - 16;
-        const tmp = document.createElement('canvas');
-        tmp.width = modalCanvas.width;
-        tmp.height = modalCanvas.height;
-        const tmpCtx = tmp.getContext('2d');
-        if (tmpCtx) tmpCtx.drawImage(modalCanvas, 0, 0);
-        modalCanvas.width = Math.round(w * dpr);
-        modalCanvas.height = Math.round(h * dpr);
-        modalCanvas.style.width = w + 'px';
-        modalCanvas.style.height = h + 'px';
-        const ctx = modalCanvas.getContext('2d');
-        if (ctx) {
-          ctx.scale(dpr, dpr);
-          ctx.drawImage(tmp, 0, 0, w, h);
-        }
-      };
-
-      setTimeout(resizeModalCanvas, 150);
-      window.addEventListener('resize', resizeModalCanvas);
-
-      if (sigData[id]) {
-        setTimeout(() => {
-          const img = new Image();
-          img.onload = () => {
-            const ctx = modalCanvas.getContext('2d');
-            if (ctx) ctx.drawImage(img, 0, 0, modalCanvas.width, modalCanvas.height);
-          };
-          img.src = sigData[id];
-        }, 200);
-      }
-
-      const mCtx = modalCanvas.getContext('2d');
-      if (!mCtx) return;
-      let drawing = false;
-
-      const mPos = (e: MouseEvent | TouchEvent) => {
-        const r = modalCanvas.getBoundingClientRect();
-        const src = 'touches' in e ? e.touches[0] : e;
-        return { x: src.clientX - r.left, y: src.clientY - r.top };
-      };
-
-      const mStart = (e: MouseEvent | TouchEvent) => {
-        e.preventDefault();
-        drawing = true;
-        const p = mPos(e);
-        mCtx.beginPath();
-        mCtx.moveTo(p.x, p.y);
-      };
-
-      const mMove = (e: MouseEvent | TouchEvent) => {
-        e.preventDefault();
-        if (!drawing) return;
-        const p = mPos(e);
-        mCtx.lineTo(p.x, p.y);
-        mCtx.strokeStyle = '#000';
-        mCtx.lineWidth = 2;
-        mCtx.lineCap = 'round';
-        mCtx.lineJoin = 'round';
-        mCtx.stroke();
-      };
-
-      const mStop = () => {
-        drawing = false;
-        mCtx.closePath();
-      };
-
-      modalCanvas.addEventListener('mousedown', mStart as any);
-      modalCanvas.addEventListener('mousemove', mMove as any);
-      modalCanvas.addEventListener('mouseup', mStop);
-      modalCanvas.addEventListener('mouseleave', mStop);
-      modalCanvas.addEventListener('touchstart', mStart as any, { passive: false });
-      modalCanvas.addEventListener('touchmove', mMove as any, { passive: false });
-      modalCanvas.addEventListener('touchend', mStop);
-
-      const closeModal = (save: boolean) => {
-        if (save) {
-          sigData[id] = modalCanvas.toDataURL('image/png');
-        }
-        window.removeEventListener('resize', resizeModalCanvas);
-        overlay.remove();
-        const doRedraw = () => {
-          if (save) setTimeout(() => redrawPreviewCanvas(id), 350);
-        };
-        if (document.fullscreenElement) {
-          document.exitFullscreen().then(() => {
-            if (screen.orientation && (screen.orientation as any).unlock) (screen.orientation as any).unlock();
-            doRedraw();
-          }).catch(() => doRedraw());
-        } else {
-          if (screen.orientation && (screen.orientation as any).unlock) (screen.orientation as any).unlock();
-          doRedraw();
-        }
-      };
-
-      document.getElementById('sig-clear-btn')!.onclick = () => mCtx.clearRect(0, 0, modalCanvas.width, modalCanvas.height);
-      document.getElementById('sig-cancel-btn')!.onclick = () => closeModal(false);
-      document.getElementById('sig-ok-btn')!.onclick = () => closeModal(true);
-    };
-
-    // Initialize signature canvases
-    ['sig-gerlieva', 'sig-kunde'].forEach(id => {
-      const canvas = document.getElementById(id) as HTMLCanvasElement;
-      if (!canvas) return;
-      const label = id === 'sig-gerlieva' ? 'Unterschrift GERLIEVA' : 'Unterschrift Kunde';
-      redrawPreviewCanvas(id);
-      canvas.addEventListener('click', () => openSigModal(id, label));
-      canvas.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        openSigModal(id, label);
-      }, { passive: false });
-
-      // Clear button
-      const clearBtn = canvas.nextElementSibling?.querySelector('button');
-      if (clearBtn) {
-        clearBtn.onclick = () => clearSig(id);
-      }
-    });
-
-    // Resize handler
-    const onResize = () => {
-      setTimeout(() => {
-        redrawPreviewCanvas('sig-gerlieva');
-        redrawPreviewCanvas('sig-kunde');
-      }, 200);
-    };
-    window.addEventListener('resize', onResize);
-    if (screen.orientation) screen.orientation.addEventListener('change', onResize);
-
-    // Button handlers
-    const btnPdf = document.getElementById('btn-pdf');
-    if (btnPdf) {
-      btnPdf.addEventListener('click', () => {
-        alert('Im Druckdialog:\n1. Drucker → "Als PDF speichern"\n2. Weitere Einstellungen → "Hintergrundgrafiken" ✓ aktivieren\n→ Dann sind alle Farben im PDF enthalten.');
-        window.print();
-      });
-    }
-
-    const btnSave = document.getElementById('btn-save');
-    if (btnSave) {
-      btnSave.addEventListener('click', () => {
-        const btn = btnSave as HTMLButtonElement;
-        btn.disabled = true;
-        btn.textContent = '⏳ Wird gespeichert…';
-        try {
-          const json = JSON.stringify(collectFormData(), null, 2);
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = getFileName('json');
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(() => URL.revokeObjectURL(url), 2000);
-          showToast('✅ JSON gespeichert!', 'success');
-        } catch (err: any) {
-          showToast('Fehler: ' + err.message, 'error');
-        }
-        btn.disabled = false;
-        btn.textContent = '💾 JSON speichern';
-      });
-    }
-
-    const btnShare = document.getElementById('btn-share');
-    if (btnShare) {
-      btnShare.addEventListener('click', async () => {
-        const btn = btnShare as HTMLButtonElement;
-        btn.disabled = true;
-        btn.textContent = '⏳ Wird vorbereitet…';
-        try {
-          const json = JSON.stringify(collectFormData(), null, 2);
-          const blob = new Blob([json], { type: 'application/json' });
-          const file = new File([blob], getFileName('json'), { type: 'application/json' });
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ title: 'Servicebericht GERLIEVA', files: [file] });
-          } else {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = getFileName('json');
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 2000);
-            showToast('✅ JSON heruntergeladen!', 'success');
-          }
-        } catch (err: any) {
-          if (err.name !== 'AbortError') showToast('Fehler: ' + err.message, 'error');
-        }
-        btn.disabled = false;
-        btn.textContent = '📤 JSON teilen';
-      });
-    }
-
-    const btnLoad = document.getElementById('btn-load');
-    const loadInput = document.getElementById('load-input') as HTMLInputElement;
-    if (btnLoad && loadInput) {
-      btnLoad.addEventListener('click', () => loadInput.click());
-      loadInput.addEventListener('change', (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          try {
-            const data = JSON.parse(ev.target?.result as string);
-            applyFormData(data);
-            showToast('✅ Datei erfolgreich geladen!', 'success');
-          } catch (err: any) {
-            showToast('Fehler beim Laden: ' + err.message, 'error');
-          }
-        };
-        reader.readAsText(file);
-        loadInput.value = '';
-      });
-    }
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', onResize);
-      if (screen.orientation) screen.orientation.removeEventListener('change', onResize);
-    };
+    setTimeout(resize, 150);
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
   }, []);
+
+  useEffect(() => {
+    if (!existing || !canvasRef.current) return;
+    setTimeout(() => {
+      const canvas = canvasRef.current!;
+      const img = new Image();
+      img.onload = () => canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      img.src = existing;
+    }, 200);
+  }, [existing]);
+
+  const getPos = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+    const r = canvas.getBoundingClientRect();
+    const src = 'touches' in e ? e.touches[0] : e;
+    return { x: src.clientX - r.left, y: src.clientY - r.top };
+  };
+
+  const onStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext('2d')!;
+    drawing.current = true;
+    const p = getPos(e, canvas);
+    ctx.beginPath(); ctx.moveTo(p.x, p.y);
+  };
+  const onMove = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    if (!drawing.current) return;
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext('2d')!;
+    const p = getPos(e, canvas);
+    ctx.lineTo(p.x, p.y);
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.stroke();
+  };
+  const onStop = () => { drawing.current = false; canvasRef.current?.getContext('2d')?.closePath(); };
+
+  const handleClear = () => {
+    const c = canvasRef.current!;
+    c.getContext('2d')!.clearRect(0, 0, c.width, c.height);
+  };
+
+  const handleOk = () => {
+    onClose(canvasRef.current?.toDataURL('image/png'));
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 99999, background: '#fff',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      <div style={{ background: '#1a2744', color: '#fff', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 13, fontWeight: 'bold', flex: 1 }}>✍️ {label}</span>
+        <button onClick={handleClear} style={btnStyle('#e8460a')}>🗑 Löschen</button>
+        <button onClick={() => onClose()} style={btnStyle('#888')}>Abbrechen</button>
+        <button onClick={handleOk} style={btnStyle('#2a7a2a')}>✓ Bestätigen</button>
+      </div>
+      <div style={{ flex: 1, padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0' }}>
+        <canvas
+          ref={canvasRef}
+          width={400} height={200}
+          style={{ background: 'white', border: '2px solid #aaa', borderRadius: 4, touchAction: 'none', cursor: 'crosshair', maxWidth: '100%', maxHeight: '100%' }}
+          onMouseDown={onStart} onMouseMove={onMove} onMouseUp={onStop} onMouseLeave={onStop}
+          onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onStop}
+        />
+      </div>
+      <div style={{ textAlign: 'center', padding: 6, fontSize: 8, color: '#666' }}>Hier unterschreiben</div>
+    </div>
+  );
+}
+
+const btnStyle = (bg: string): React.CSSProperties => ({
+  background: bg, color: '#fff', border: 'none', padding: '8px 16px',
+  borderRadius: 4, fontSize: 11, cursor: 'pointer', marginRight: 4,
+  fontFamily: 'Arial, sans-serif',
+});
+
+// ─── Signature Preview Canvas ──────────────────────────────────────────────────
+
+function SigPreview({ dataUrl, onClick }: { dataUrl?: string; onClick: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const redraw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width || 300;
+    const h = rect.height || 90;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    const ctx = canvas.getContext('2d')!;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr);
+    if (dataUrl) {
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0, w, h);
+      img.src = dataUrl;
+    } else {
+      ctx.fillStyle = '#bbb'; ctx.font = '11px Arial'; ctx.textAlign = 'center';
+      ctx.fillText('Tippen zum Unterschreiben', w / 2, h / 2);
+    }
+  }, [dataUrl]);
+
+  useEffect(() => {
+    setTimeout(redraw, 50);
+    window.addEventListener('resize', redraw);
+    return () => window.removeEventListener('resize', redraw);
+  }, [redraw]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={400} height={100}
+      onClick={onClick}
+      style={{ border: '2px dashed #999', background: 'white', cursor: 'pointer', width: '100%', aspectRatio: '4/1', borderRadius: 3, display: 'block', touchAction: 'none' }}
+    />
+  );
+}
+
+// ─── Toast ─────────────────────────────────────────────────────────────────────
+
+function Toast({ msg, type, visible }: { msg: string; type: 'success' | 'error' | ''; visible: boolean }) {
+  return (
+    <div style={{
+      position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+      background: type === 'success' ? '#1a7a3a' : type === 'error' ? '#c53a08' : '#333',
+      color: 'white', padding: '12px 24px', borderRadius: 8, fontSize: 14, zIndex: 10000,
+      opacity: visible ? 1 : 0, transition: 'opacity 0.3s ease', pointerEvents: 'none',
+      maxWidth: '90%', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+    }}>
+      {msg}
+    </div>
+  );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+
+export default function ServiceberichtPage() {
+  const [form, setForm] = useState<FormData>(initialForm);
+  const [sigModal, setSigModal] = useState<{ id: 'sig-gerlieva' | 'sig-kunde'; label: string } | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' | ''; visible: boolean }>({ msg: '', type: '', visible: false });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (msg: string, type: 'success' | 'error') => {
+    setToast({ msg, type, visible: true });
+    setTimeout(() => setToast(t => ({ ...t, visible: false })), 2500);
+  };
+
+  // ── Field helpers ────────────────────────────────────────────────────────────
+
+  const setField = <K extends keyof FormData>(key: K, value: FormData[K]) =>
+    setForm(f => ({ ...f, [key]: value }));
+
+  const setMaschine = (i: number, field: keyof MaschineRow, val: string) =>
+    setForm(f => { const m = [...f.maschinen]; m[i] = { ...m[i], [field]: val }; return { ...f, maschinen: m }; });
+
+  const setZeit = (i: number, field: keyof ZeitRow, val: string) =>
+    setForm(f => { const z = [...f.zeiten]; z[i] = { ...z[i], [field]: val }; return { ...f, zeiten: z }; });
+
+  const setMaterial = (i: number, field: keyof MaterialRow, val: string) =>
+    setForm(f => { const m = [...f.material]; m[i] = { ...m[i], [field]: val }; return { ...f, material: m }; });
+
+  const toggleCheck = (group: 'arbeitenChecks' | 'reiseChecks', key: string) =>
+    setForm(f => ({ ...f, [group]: { ...f[group], [key]: !f[group][key] } }));
+
+  // ── File name helper ─────────────────────────────────────────────────────────
+
+  const getFileName = (ext: string) => {
+    const kunde = (form.kundeName || '').trim().replace(/[^a-zA-Z0-9_\-]/g, '_');
+    const datum = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    return (kunde ? `Servicebericht_${kunde}_${datum}` : `Servicebericht_${datum}`) + '.' + ext;
+  };
+
+  // ── Serialize / Deserialize ──────────────────────────────────────────────────
+
+  const collectFormData = () => ({ ...form, ts: new Date().toISOString() });
+
+  const applyFormData = (data: FormData) => {
+    if (!data || data.version !== 1) { showToast('Ungültige JSON-Datei', 'error'); return; }
+    setForm(data);
+    showToast('✅ Datei erfolgreich geladen!', 'success');
+  };
+
+  // ── Toolbar actions ──────────────────────────────────────────────────────────
+
+  const handleSave = () => {
+    try {
+      const json = JSON.stringify(collectFormData(), null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = getFileName('json');
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      showToast('✅ JSON gespeichert!', 'success');
+    } catch (err: unknown) { showToast('Fehler: ' + (err as Error).message, 'error'); }
+  };
+
+  const handleShare = async () => {
+    try {
+      const json = JSON.stringify(collectFormData(), null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const file = new File([blob], getFileName('json'), { type: 'application/json' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: 'Servicebericht GERLIEVA', files: [file] });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = getFileName('json');
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        showToast('✅ JSON heruntergeladen!', 'success');
+      }
+    } catch (err: unknown) {
+      if ((err as Error).name !== 'AbortError') showToast('Fehler: ' + (err as Error).message, 'error');
+    }
+  };
+
+  const handlePdf = () => {
+    alert('Im Druckdialog:\n1. Drucker → "Als PDF speichern"\n2. Weitere Einstellungen → "Hintergrundgrafiken" ✓ aktivieren\n→ Dann sind alle Farben im PDF enthalten.');
+    window.print();
+  };
+
+  const handleLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string) as FormData;
+        applyFormData(data);
+      } catch (err: unknown) { showToast('Fehler beim Laden: ' + (err as Error).message, 'error'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  // ── Signature ────────────────────────────────────────────────────────────────
+
+  const handleSigClose = (id: 'sig-gerlieva' | 'sig-kunde', dataUrl?: string) => {
+    if (dataUrl) setForm(f => ({ ...f, signatures: { ...f.signatures, [id]: dataUrl } }));
+    setSigModal(null);
+  };
+
+  const clearSig = (id: 'sig-gerlieva' | 'sig-kunde') => {
+    setForm(f => { const s = { ...f.signatures }; delete s[id]; return { ...f, signatures: s }; });
+  };
+
+  // ── Styles ───────────────────────────────────────────────────────────────────
+
+  const s = styles;
+
+  // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <>
-      <SEO 
-        title="Servicebericht - GERLIEVA Sprühtechnik GmbH"
-        description="Digitaler Servicebericht für GERLIEVA Sprühtechnik GmbH"
-      />
-      <Head>
-        <style dangerouslySetInnerHTML={{ __html: `
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: Arial, sans-serif; font-size: 11px; padding: 20px; max-width: 1000px; margin: 0 auto; background: #f5f5f5; }
-          .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-top: 50px; }
-          .header { border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 8px; }
-          .header h1 { font-size: 16px; font-weight: bold; }
-          .header p { font-size: 9px; color: #666; }
-          h2 { font-size: 14px; margin-bottom: 10px; background: #f0f0f0; padding: 8px; border-radius: 4px; }
-          .section { margin-bottom: 15px; border: 1px solid #ccc; padding: 10px; border-radius: 4px; background: white; }
-          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-          th, td { border: 1px solid #000; padding: 4px; text-align: left; font-size: 10px; }
-          th { background-color: #e0e0e0; font-weight: bold; text-align: center; }
-          th[colspan] { background-color: #d0d0d0; }
-          td input { width: 100%; border: none; padding: 2px; background: transparent; font-size: 10px; }
-          td input[type="number"] { width: 55px; }
-          td input[type="time"] { width: 80px; }
-          td input:focus { outline: 1px solid #4CAF50; background: #fffef0; }
-          .checkbox-list { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 8px; }
-          .checkbox-item { display: flex; align-items: center; gap: 5px; }
-          .signature-container { display: flex; gap: 20px; margin-top: 15px; }
-          .signature-box { flex: 1; border: 2px solid #ccc; padding: 10px; border-radius: 4px; background: #fafafa; }
-          .signature-canvas { border: 2px dashed #999; background: white; cursor: crosshair; width: 100%; height: 150px; border-radius: 4px; }
-          .signature-canvas:hover { border-color: #4CAF50; }
-          .signature-name { margin-top: 8px; }
-          .signature-name input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 11px; }
-          .date-box { text-align: center; margin-top: 15px; font-weight: bold; font-size: 12px; }
-          .date-box input { border: 1px solid #ccc; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
-          .grid-row { display: grid; grid-template-columns: 140px 1fr; gap: 8px; margin-bottom: 5px; align-items: center; }
-          .label { font-weight: bold; }
-          .grid-row input { border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 11px; }
-          .grid-row input:focus { outline: 1px solid #4CAF50; }
-          .inline-field { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-          .inline-field label { font-weight: bold; white-space: nowrap; }
-          .inline-field input { flex: 1; border: 1px solid #ddd; padding: 4px; border-radius: 3px; font-size: 11px; }
-          #toolbar {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
-            background: #1a2744; padding: 7px 18px;
-            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-          }
-          #toolbar span { color: #a8b8d8; font-size: 9pt; }
-          .tbtn { border: none; padding: 6px 16px; font-size: 9pt; font-weight: bold; border-radius: 3px; cursor: pointer; font-family: Arial, sans-serif; }
-          #btn-pdf   { background: #e8460a; color: #fff; }
-          #btn-pdf:hover { background: #c53a08; }
-          #btn-share { background: #1a7a3a; color: #fff; }
-          #btn-share:hover { background: #155e2c; }
-          #btn-save  { background: #1a5fa8; color: #fff; }
-          #btn-save:hover { background: #154d8a; }
-          #btn-load  { background: #8e24aa; color: #fff; }
-          #btn-load:hover { background: #7b1fa2; }
-          .tbtn:disabled { background: #888 !important; cursor: default; }
-          #load-input { display: none; }
-          @media print {
-            #toolbar { display: none !important; }
-            body { padding: 10px; font-size: 10.5px; background: white; }
-            .section { page-break-inside: avoid; box-shadow: none; }
-            .page-break-before { page-break-before: always; }
-            .signature-canvas { border: 1px solid #000; }
-            .container { box-shadow: none; padding: 0; }
-          }
-          
-          .toast {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            z-index: 10000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            max-width: 90%;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          }
-          .toast.show {
-            opacity: 1;
-          }
-          .toast.success {
-            background: #1a7a3a;
-          }
-          .toast.error {
-            background: #c53a08;
-          }
-        ` }} />
-      </Head>
+      <style>{printStyles}</style>
 
-      <div className="container">
-        <div id="toolbar">
-          <button id="btn-load" className="tbtn">📂 JSON laden</button>
-          <button id="btn-pdf" className="tbtn">⬇ Als PDF speichern</button>
-          <button id="btn-share" className="tbtn">📤 JSON teilen</button>
-          <button id="btn-save" className="tbtn">💾 JSON speichern</button>
-          <span>Servicebericht · GERLIEVA Sprühtechnik GmbH</span>
-          <button className="tbtn" style={{ background: "#1a5fa8", marginLeft: "auto" }} onClick={() => window.location.href = '/'}>🏠 Home</button>
-        </div>
-        <input type="file" id="load-input" ref={loadInputRef} accept=".json" style={{ display: "none" }} />
+      {/* Toolbar */}
+      <div style={s.toolbar} className="no-print">
+        <button onClick={() => fileInputRef.current?.click()} style={{ ...s.tbtn, background: '#8e24aa' }}>📂 JSON laden</button>
+        <button onClick={handlePdf} style={{ ...s.tbtn, background: '#e8460a' }}>⬇ Als PDF speichern</button>
+        <button onClick={handleShare} style={{ ...s.tbtn, background: '#1a7a3a' }}>📤 JSON teilen</button>
+        <button onClick={handleSave} style={{ ...s.tbtn, background: '#1a5fa8' }}>💾 JSON speichern</button>
+        <span style={{ color: '#a8b8d8', fontSize: 9 }}>Servicebericht · GERLIEVA Sprühtechnik GmbH</span>
+        <a href="/" style={{ ...s.tbtn, background: '#1a5fa8', marginLeft: 'auto', textDecoration: 'none' }}>🏠 Home</a>
+        <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoad} />
+      </div>
 
-        <div className="header">
-          <h1>GERLIEVA Sprühtechnik GmbH</h1>
-          <p>Tiergartenstraße 8 · 79423 Heitersheim · Tel. +49 7634 56912-0</p>
-        </div>
+      {/* Main container */}
+      <div style={s.body}>
+        <div style={s.container}>
 
-        <h2 style={{ fontSize: "18px", marginBottom: "15px", background: "transparent", padding: 0 }}>Servicebericht</h2>
-
-        <div className="section">
-          <h2>Kunde</h2>
-          <div className="grid-row"><span className="label">Name:</span> <input type="text" defaultValue="" /></div>
-          <div className="grid-row"><span className="label">Straße:</span> <input type="text" defaultValue="" /></div>
-          <div className="grid-row"><span className="label">Telefon:</span> <input type="text" defaultValue="" /></div>
-          <div className="grid-row"><span className="label">Referenz:</span> <input type="text" defaultValue="" /></div>
-        </div>
-
-        <div className="inline-field">
-          <label>Servicetechniker:</label>
-          <input type="text" defaultValue="" />
-        </div>
-
-        <div className="section">
-          <h2>Maschine</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Nr.</th>
-                <th>Typ</th>
-                <th>Maschinen-Nr.</th>
-                <th>Kunden-Nr.</th>
-                <th>Kom.-Nr.</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-              </tr>
-              <tr>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-              </tr>
-              <tr>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-              </tr>
-              <tr>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-              </tr>
-              <tr>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-                <td><input type="text" defaultValue="" /></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div className="section">
-          <h2>Durchgeführte Arbeiten</h2>
-          <div className="checkbox-list">
-            <div className="checkbox-item"><input type="checkbox" /> Montage</div>
-            <div className="checkbox-item"><input type="checkbox" /> Inbetriebnahme</div>
-            <div className="checkbox-item"><input type="checkbox" /> Softwareupdate</div>
-            <div className="checkbox-item"><input type="checkbox" /> Wartung</div>
-            <div className="checkbox-item"><input type="checkbox" /> Reparatur</div>
+          {/* Header */}
+          <div style={s.header}>
+            <h1 style={{ fontSize: 16, fontWeight: 'bold' }}>GERLIEVA Sprühtechnik GmbH</h1>
+            <p style={{ fontSize: 9, color: '#666' }}>Tiergartenstraße 8 · 79423 Heitersheim · Tel. +49 7634 56912-0</p>
           </div>
-          <input type="text" defaultValue="" style={{ width: "100%", border: "1px solid #ddd", padding: "6px", borderRadius: "4px", marginTop: "8px" }} />
-        </div>
 
-        <div className="section">
-          <h2>Arbeits- und Reisezeiten</h2>
-          <div className="checkbox-list">
-            <div className="checkbox-item"><input type="checkbox" /> PKW</div>
-            <div className="checkbox-item"><input type="checkbox" /> Flugzeug</div>
-            <div className="checkbox-item"><input type="checkbox" /> Zug</div>
-            <div className="checkbox-item"><input type="checkbox" /> Hotel</div>
-            <div className="checkbox-item"><input type="checkbox" /> Sonstiges</div>
-          </div>
-          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            <table style={{ marginTop: "10px", borderCollapse: "collapse" }}>
-              <colgroup>
-                <col style={{ width: "30px" }} />
-                <col style={{ width: "90px" }} />
-                <col style={{ width: "70px" }} />
-                <col style={{ width: "70px" }} />
-                <col style={{ width: "50px" }} />
-                <col style={{ width: "70px" }} />
-                <col style={{ width: "70px" }} />
-                <col style={{ width: "70px" }} />
-                <col style={{ width: "70px" }} />
-                <col style={{ width: "50px" }} />
-                <col style={{ width: "65px" }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th rowSpan={2}>Tag</th>
-                  <th rowSpan={2}>Datum</th>
-                  <th colSpan={2}>Anreise</th>
-                  <th rowSpan={2}>km</th>
-                  <th colSpan={2}>Arbeitszeit</th>
-                  <th colSpan={2}>Rückreise</th>
-                  <th rowSpan={2}>km</th>
-                  <th rowSpan={2}>Pause (Min)</th>
-                </tr>
-                <tr>
-                  <th>von</th>
-                  <th>bis</th>
-                  <th>von</th>
-                  <th>bis</th>
-                  <th>von</th>
-                  <th>bis</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style={{ textAlign: "center" }}>1</td>
-                  <td><input type="date" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>2</td>
-                  <td><input type="date" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>3</td>
-                  <td><input type="date" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>4</td>
-                  <td><input type="date" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>5</td>
-                  <td><input type="date" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>6</td>
-                  <td><input type="date" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
-                </tr>
-                <tr>
-                  <td style={{ textAlign: "center" }}>7</td>
-                  <td><input type="date" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="time" defaultValue="" /></td>
-                  <td><input type="number" defaultValue="" max={9999} style={{ width: "60px" }} /></td>
-                  <td><input type="number" defaultValue="" max={99999999} style={{ width: "80px" }} placeholder="Min" /></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <h2 style={{ fontSize: 18, marginBottom: 15, background: 'transparent', padding: 0 }}>Servicebericht</h2>
 
-        <div className="page-break-before">
-          <div className="section">
-            <h2>Material- und Teileliste</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th style={{ width: "60px" }}>Pos.</th>
-                  <th>Beschreibung</th>
-                  <th style={{ width: "120px" }}>Teilenummer</th>
-                  <th style={{ width: "60px" }}>Stk.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...Array(20)].map((_, i) => (
-                  <tr key={i}>
-                    <td><input type="text" defaultValue="" /></td>
-                    <td><input type="text" defaultValue="" /></td>
-                    <td><input type="text" defaultValue="" /></td>
-                    <td><input type="text" defaultValue="" /></td>
+          {/* ── Kunde ── */}
+          <div style={s.section}>
+            <h2 style={s.sectionTitle}>Kunde</h2>
+            {(['Name', 'Straße', 'Telefon', 'Referenz'] as const).map((label) => {
+              const key = ('kunde' + label) as keyof FormData;
+              return (
+                <div key={label} style={s.gridRow}>
+                  <span style={s.label}>{label}:</span>
+                  <input type="text" value={form[key] as string} onChange={e => setField(key, e.target.value)} style={s.gridInput} />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Servicetechniker ── */}
+          <div style={s.inlineField}>
+            <label style={s.label}>Servicetechniker:</label>
+            <input type="text" value={form.servicetechniker} onChange={e => setField('servicetechniker', e.target.value)} style={s.gridInput} />
+          </div>
+
+          {/* ── Maschine ── */}
+          <div style={s.section}>
+            <h2 style={s.sectionTitle}>Maschine</h2>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <table style={s.table}>
+                <thead>
+                  <tr>
+                    {['Nr.', 'Typ', 'Maschinen-Nr.', 'Kunden-Nr.', 'Kom.-Nr.'].map(h => (
+                      <th key={h} style={s.th}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="section">
-          <h2>Bemerkungen / Fehlerbeschreibung</h2>
-          <textarea style={{ width: "100%", height: "80px", border: "1px solid #ddd", padding: "6px", borderRadius: "4px", fontSize: "11px", fontFamily: "Arial, sans-serif", resize: "vertical" }}></textarea>
-        </div>
-
-        <div className="section" style={{ marginTop: "20px" }}>
-          <h2 style={{ borderBottom: "3px solid #000", paddingBottom: "5px", marginBottom: "15px" }}>BESTÄTIGUNG / UNTERSCHRIFTEN</h2>
-          <div style={{ display: "flex", gap: "16px", marginTop: "10px" }}>
-            <div style={{ flex: 1, border: "1px solid #ccc", borderRadius: "4px", padding: "8px", background: "#fafafa" }}>
-              <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>Unterschrift GERLIEVA</div>
-              <canvas 
-                id="sig-gerlieva"
-                ref={sigGerlievaRef}
-                style={{ border: "2px dashed #999", background: "white", cursor: "pointer", width: "100%", aspectRatio: "4/1", borderRadius: "3px", display: "block", touchAction: "none" }}
-                width={400} 
-                height={100}
-              ></canvas>
-              <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <input type="text" id="name-gerlieva" placeholder="Name Techniker" style={{ flex: 1, border: "none", borderBottom: "1px solid #aaa", outline: "none", fontSize: "11px", background: "transparent" }} />
-                <button style={{ fontSize: "9px", padding: "2px 6px", background: "#eee", border: "1px solid #bbb", borderRadius: "3px", cursor: "pointer" }}>✕ Löschen</button>
-              </div>
-            </div>
-            <div style={{ flex: 1, border: "1px solid #ccc", borderRadius: "4px", padding: "8px", background: "#fafafa" }}>
-              <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px" }}>Unterschrift Kunde</div>
-              <canvas 
-                id="sig-kunde"
-                ref={sigKundeRef}
-                style={{ border: "2px dashed #999", background: "white", cursor: "pointer", width: "100%", aspectRatio: "4/1", borderRadius: "3px", display: "block", touchAction: "none" }}
-                width={400} 
-                height={100}
-              ></canvas>
-              <div style={{ marginTop: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <input type="text" id="name-kunde" placeholder="Name Kunde" style={{ flex: 1, border: "none", borderBottom: "1px solid #aaa", outline: "none", fontSize: "11px", background: "transparent" }} />
-                <button style={{ fontSize: "9px", padding: "2px 6px", background: "#eee", border: "1px solid #bbb", borderRadius: "3px", cursor: "pointer" }}>✕ Löschen</button>
-              </div>
+                </thead>
+                <tbody>
+                  {form.maschinen.map((row, i) => (
+                    <tr key={i}>
+                      {(['nr', 'typ', 'maschinenNr', 'kundenNr', 'komNr'] as (keyof MaschineRow)[]).map(f => (
+                        <td key={f} style={s.td}><input type="text" value={row[f]} onChange={e => setMaschine(i, f, e.target.value)} style={s.cellInput} /></td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-          <div className="date-box" style={{ marginTop: "15px" }}>
-            Datum: <input type="date" id="signatureDate" defaultValue="" />
+
+          {/* ── Durchgeführte Arbeiten ── */}
+          <div style={s.section}>
+            <h2 style={s.sectionTitle}>Durchgeführte Arbeiten</h2>
+            <div style={s.checkboxList}>
+              {Object.keys(form.arbeitenChecks).map(k => (
+                <label key={k} style={s.checkboxItem}>
+                  <input type="checkbox" checked={form.arbeitenChecks[k]} onChange={() => toggleCheck('arbeitenChecks', k)} /> {k}
+                </label>
+              ))}
+            </div>
+            <input type="text" value={form.arbeitenSonstiges} onChange={e => setField('arbeitenSonstiges', e.target.value)}
+              style={{ width: '100%', border: '1px solid #ddd', padding: 6, borderRadius: 4, marginTop: 8, fontSize: 11, fontFamily: 'Arial, sans-serif', boxSizing: 'border-box' }} />
           </div>
+
+          {/* ── Arbeits- und Reisezeiten ── */}
+          <div style={s.section}>
+            <h2 style={s.sectionTitle}>Arbeits- und Reisezeiten</h2>
+            <div style={s.checkboxList}>
+              {Object.keys(form.reiseChecks).map(k => (
+                <label key={k} style={s.checkboxItem}>
+                  <input type="checkbox" checked={form.reiseChecks[k]} onChange={() => toggleCheck('reiseChecks', k)} /> {k}
+                </label>
+              ))}
+            </div>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <table style={{ ...s.table, marginTop: 10 }}>
+                <colgroup>
+                  <col style={{ width: 30 }} /><col style={{ width: 90 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} />
+                  <col style={{ width: 50 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} />
+                  <col style={{ width: 70 }} /><col style={{ width: 50 }} /><col style={{ width: 65 }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th rowSpan={2} style={s.th}>Tag</th>
+                    <th rowSpan={2} style={s.th}>Datum</th>
+                    <th colSpan={2} style={{ ...s.th, background: '#d0d0d0' }}>Anreise</th>
+                    <th rowSpan={2} style={s.th}>km</th>
+                    <th colSpan={2} style={{ ...s.th, background: '#d0d0d0' }}>Arbeitszeit</th>
+                    <th colSpan={2} style={{ ...s.th, background: '#d0d0d0' }}>Rückreise</th>
+                    <th rowSpan={2} style={s.th}>km</th>
+                    <th rowSpan={2} style={s.th}>Pause (Min)</th>
+                  </tr>
+                  <tr>
+                    {['von', 'bis', 'von', 'bis', 'von', 'bis'].map((h, i) => (
+                      <th key={i} style={s.th}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {form.zeiten.map((row, i) => (
+                    <tr key={i}>
+                      <td style={{ ...s.td, textAlign: 'center' }}>{i + 1}</td>
+                      <td style={s.td}><input type="date" value={row.datum} onChange={e => setZeit(i, 'datum', e.target.value)} style={s.cellInput} /></td>
+                      <td style={s.td}><input type="time" value={row.anreiseVon} onChange={e => setZeit(i, 'anreiseVon', e.target.value)} style={{ ...s.cellInput, width: 80 }} /></td>
+                      <td style={s.td}><input type="time" value={row.anreiseBis} onChange={e => setZeit(i, 'anreiseBis', e.target.value)} style={{ ...s.cellInput, width: 80 }} /></td>
+                      <td style={s.td}><input type="number" value={row.anreiseKm} onChange={e => setZeit(i, 'anreiseKm', e.target.value)} max={9999} style={{ ...s.cellInput, width: 60 }} /></td>
+                      <td style={s.td}><input type="time" value={row.arbeitVon} onChange={e => setZeit(i, 'arbeitVon', e.target.value)} style={{ ...s.cellInput, width: 80 }} /></td>
+                      <td style={s.td}><input type="time" value={row.arbeitBis} onChange={e => setZeit(i, 'arbeitBis', e.target.value)} style={{ ...s.cellInput, width: 80 }} /></td>
+                      <td style={s.td}><input type="time" value={row.rueckreiseVon} onChange={e => setZeit(i, 'rueckreiseVon', e.target.value)} style={{ ...s.cellInput, width: 80 }} /></td>
+                      <td style={s.td}><input type="time" value={row.rueckreiseBis} onChange={e => setZeit(i, 'rueckreiseBis', e.target.value)} style={{ ...s.cellInput, width: 80 }} /></td>
+                      <td style={s.td}><input type="number" value={row.rueckreiseKm} onChange={e => setZeit(i, 'rueckreiseKm', e.target.value)} max={9999} style={{ ...s.cellInput, width: 60 }} /></td>
+                      <td style={s.td}><input type="number" value={row.pauseMin} onChange={e => setZeit(i, 'pauseMin', e.target.value)} max={99999999} placeholder="Min" style={{ ...s.cellInput, width: 80 }} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ── Material- und Teileliste ── */}
+          <div style={{ pageBreakBefore: 'always' }}>
+            <div style={s.section}>
+              <h2 style={s.sectionTitle}>Material- und Teileliste</h2>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={s.table}>
+                  <thead>
+                    <tr>
+                      <th style={{ ...s.th, width: 60 }}>Pos.</th>
+                      <th style={s.th}>Beschreibung</th>
+                      <th style={{ ...s.th, width: 120 }}>Teilenummer</th>
+                      <th style={{ ...s.th, width: 60 }}>Stk.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {form.material.map((row, i) => (
+                      <tr key={i}>
+                        {(['pos', 'beschreibung', 'teilenummer', 'stk'] as (keyof MaterialRow)[]).map(f => (
+                          <td key={f} style={s.td}><input type="text" value={row[f]} onChange={e => setMaterial(i, f, e.target.value)} style={s.cellInput} /></td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Bemerkungen ── */}
+          <div style={s.section}>
+            <h2 style={s.sectionTitle}>Bemerkungen / Fehlerbeschreibung</h2>
+            <textarea
+              value={form.bemerkungen}
+              onChange={e => setField('bemerkungen', e.target.value)}
+              style={{ width: '100%', height: 80, border: '1px solid #ddd', padding: 6, borderRadius: 4, fontSize: 11, fontFamily: 'Arial, sans-serif', resize: 'vertical', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          {/* ── Unterschriften ── */}
+          <div style={{ ...s.section, marginTop: 20 }}>
+            <h2 style={{ borderBottom: '3px solid #000', paddingBottom: 5, marginBottom: 15, fontSize: 14, background: '#f0f0f0', padding: '8px', borderRadius: 4 }}>
+              BESTÄTIGUNG / UNTERSCHRIFTEN
+            </h2>
+            <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
+              {(['sig-gerlieva', 'sig-kunde'] as const).map(id => {
+                const isGerlieva = id === 'sig-gerlieva';
+                const label = isGerlieva ? 'Unterschrift GERLIEVA' : 'Unterschrift Kunde';
+                const nameKey = isGerlieva ? 'nameGerlieva' : 'nameKunde';
+                const placeholder = isGerlieva ? 'Name Techniker' : 'Name Kunde';
+                return (
+                  <div key={id} style={{ flex: 1, border: '1px solid #ccc', borderRadius: 4, padding: 8, background: '#fafafa' }}>
+                    <div style={{ fontSize: 11, fontWeight: 'bold', marginBottom: 4 }}>{label}</div>
+                    <SigPreview dataUrl={form.signatures[id]} onClick={() => setSigModal({ id, label })} />
+                    <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <input
+                        type="text"
+                        placeholder={placeholder}
+                        value={form[nameKey]}
+                        onChange={e => setField(nameKey, e.target.value)}
+                        style={{ flex: 1, border: 'none', borderBottom: '1px solid #aaa', outline: 'none', fontSize: 11, background: 'transparent' }}
+                      />
+                      <button onClick={() => clearSig(id)} style={{ fontSize: 9, padding: '2px 6px', background: '#eee', border: '1px solid #bbb', borderRadius: 3, cursor: 'pointer' }}>
+                        ✕ Löschen
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ textAlign: 'center', marginTop: 15, fontWeight: 'bold', fontSize: 12 }}>
+              Datum:{' '}
+              <input
+                type="date"
+                value={form.signatureDate}
+                onChange={e => setField('signatureDate', e.target.value)}
+                style={{ border: '1px solid #ccc', padding: '4px 8px', borderRadius: 4, fontSize: 11 }}
+              />
+            </div>
+          </div>
+
         </div>
       </div>
+
+      {/* Signature Modal */}
+      {sigModal && (
+        <SignatureModal
+          label={sigModal.label}
+          existing={form.signatures[sigModal.id]}
+          onClose={(dataUrl) => handleSigClose(sigModal.id, dataUrl)}
+        />
+      )}
+
+      {/* Toast */}
+      <Toast msg={toast.msg} type={toast.type} visible={toast.visible} />
     </>
   );
 }
+
+// ─── Styles ────────────────────────────────────────────────────────────────────
+
+const styles: Record<string, React.CSSProperties> = {
+  toolbar: {
+    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+    background: '#1a2744', padding: '7px 18px',
+    display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+  },
+  tbtn: {
+    border: 'none', padding: '6px 16px', fontSize: 9, fontWeight: 'bold',
+    borderRadius: 3, cursor: 'pointer', fontFamily: 'Arial, sans-serif', color: '#fff',
+  },
+  body: {
+    fontFamily: 'Arial, sans-serif', fontSize: 11, padding: 20,
+    maxWidth: 1000, margin: '0 auto', background: '#f5f5f5',
+  },
+  container: {
+    background: 'white', padding: 20, borderRadius: 8,
+    boxShadow: '0 2px 10px rgba(0,0,0,0.1)', marginTop: 50,
+  },
+  header: {
+    borderBottom: '2px solid #000', marginBottom: 15, paddingBottom: 8,
+  },
+  section: {
+    marginBottom: 15, border: '1px solid #ccc', padding: 10,
+    borderRadius: 4, background: 'white',
+  },
+  sectionTitle: {
+    fontSize: 14, marginBottom: 10, background: '#f0f0f0',
+    padding: 8, borderRadius: 4,
+  },
+  table: {
+    width: '100%', borderCollapse: 'collapse' as const, marginTop: 8,
+  },
+  th: {
+    border: '1px solid #000', padding: 4, textAlign: 'center' as const,
+    background: '#e0e0e0', fontWeight: 'bold', fontSize: 10,
+  },
+  td: {
+    border: '1px solid #000', padding: 4, textAlign: 'left' as const, fontSize: 10,
+  },
+  cellInput: {
+    width: '100%', border: 'none', padding: 2, background: 'transparent',
+    fontSize: 10, fontFamily: 'Arial, sans-serif', boxSizing: 'border-box' as const,
+  },
+  gridRow: {
+    display: 'grid', gridTemplateColumns: '140px 1fr', gap: 8,
+    marginBottom: 5, alignItems: 'center',
+  },
+  label: { fontWeight: 'bold' },
+  gridInput: {
+    border: '1px solid #ddd', padding: 4, borderRadius: 3,
+    fontSize: 11, fontFamily: 'Arial, sans-serif',
+  },
+  inlineField: {
+    display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+  },
+  checkboxList: {
+    display: 'flex', flexWrap: 'wrap' as const, gap: 15, marginBottom: 8,
+  },
+  checkboxItem: {
+    display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer',
+  },
+};
+
+const printStyles = `
+  @media print {
+    .no-print { display: none !important; }
+    body { padding: 10px; font-size: 10.5px; background: white; }
+  }
+`;
