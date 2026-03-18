@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/toaster";
 import { LoginScreen } from "@/components/LoginScreen";
+import { UpdateBanner } from "@/components/UpdateBanner";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { useEffect, useState } from "react";
@@ -22,6 +23,11 @@ export default function App({ Component, pageProps }: AppProps) {
         navigator.serviceWorker.register("/sw.js").then(
           function (registration) {
             console.log("Service Worker registration successful with scope: ", registration.scope);
+            
+            // Check for updates every 60 seconds
+            setInterval(() => {
+              registration.update();
+            }, 60000);
           },
           function (err) {
             console.log("Service Worker registration failed: ", err);
@@ -48,6 +54,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <>
       <Component {...pageProps} />
+      <UpdateBanner />
       <Toaster />
     </>
   );
