@@ -45,7 +45,8 @@ const config: Config = {
         ring: "hsl(var(--ring))",
         navy: "hsl(var(--navy))",
         lightgray: "hsl(var(--light-gray))",
-        orange: "hsl(var(--orange))"
+        orange: "hsl(var(--orange))",
+        magenta: "hsl(var(--magenta))"
       },
       borderRadius: {
         lg: "var(--radius)",
