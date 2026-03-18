@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
-import { FileText, ClipboardList } from "lucide-react";
+import { FileText } from "lucide-react";
 
 export default function Home() {
   return (
@@ -19,7 +19,7 @@ export default function Home() {
                 Gerlieva App
               </h1>
               <p className="text-xl text-muted-foreground">
-                Service-Berichte und Protokolle verwalten
+                Professionelle Service-Berichte erstellen
               </p>
             </div>
 
@@ -30,7 +30,7 @@ export default function Home() {
                   className="w-full sm:w-auto text-lg px-8 py-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all"
                 >
                   <FileText className="mr-2 h-5 w-5" />
-                  Service-Bericht
+                  Service-Bericht erstellen
                 </Button>
               </Link>
 
@@ -40,15 +40,15 @@ export default function Home() {
                   variant="outline"
                   className="w-full sm:w-auto text-lg px-8 py-6 border-2 hover:bg-magenta/10 hover:border-magenta shadow-lg hover:shadow-xl transition-all"
                 >
-                  <ClipboardList className="mr-2 h-5 w-5" />
+                  <FileText className="mr-2 h-5 w-5" />
                   Protokolle
                 </Button>
               </Link>
             </div>
 
             <div className="pt-12 text-sm text-muted-foreground">
-              <p>Erstellen Sie professionelle Service-Berichte</p>
-              <p>und verwalten Sie Ihre Protokoll-Dateien</p>
+              <p>Erstellen Sie detaillierte Service-Berichte mit Fotos,</p>
+              <p>Unterschriften und allen wichtigen Informationen</p>
             </div>
           </div>
         </div>
