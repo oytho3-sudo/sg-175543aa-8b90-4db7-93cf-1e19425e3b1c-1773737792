@@ -1,56 +1,76 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, RefreshCw } from "lucide-react";
 
 export function UpdateBanner() {
   const [showBanner, setShowBanner] = useState(false);
-  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [updateReady, setUpdateReady] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
       return;
     }
 
-    const handleControllerChange = () => {
-      window.location.reload();
+    // Check for service worker updates
+    const checkForUpdates = () => {
+      navigator.serviceWorker.getRegistration().then((registration) => {
+        if (registration) {
+          registration.update();
+          
+          // Check if there's a waiting service worker
+          if (registration.waiting) {
+            setUpdateReady(true);
+            setShowBanner(true);
+          }
+        }
+      });
     };
 
-    const handleUpdate = (registration: ServiceWorkerRegistration) => {
-      if (registration.waiting) {
-        setWaitingWorker(registration.waiting);
-        setShowBanner(true);
-      }
-    };
-
+    // Listen for service worker updates
     navigator.serviceWorker.ready.then((registration) => {
+      // Check for updates every 60 seconds
+      const interval = setInterval(checkForUpdates, 60000);
+
+      // Check immediately
+      checkForUpdates();
+
+      // Listen for waiting service worker
       registration.addEventListener("updatefound", () => {
         const newWorker = registration.installing;
-        if (!newWorker) return;
-
-        newWorker.addEventListener("statechange", () => {
-          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-            handleUpdate(registration);
-          }
-        });
+        if (newWorker) {
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              setUpdateReady(true);
+              setShowBanner(true);
+            }
+          });
+        }
       });
 
-      if (registration.waiting) {
-        handleUpdate(registration);
-      }
+      // Check when page becomes visible
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          checkForUpdates();
+        }
+      });
+
+      return () => clearInterval(interval);
     });
 
-    navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
-
-    return () => {
-      navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
-    };
+    // Listen for controller change (new service worker activated)
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      window.location.reload();
+    });
   }, []);
 
   const handleUpdate = () => {
-    if (waitingWorker) {
-      waitingWorker.postMessage({ type: "SKIP_WAITING" });
-      setShowBanner(false);
-    }
+    if (!updateReady) return;
+
+    navigator.serviceWorker.getRegistration().then((registration) => {
+      if (registration?.waiting) {
+        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+      }
+    });
   };
 
   const handleDismiss = () => {
@@ -60,29 +80,33 @@ export function UpdateBanner() {
   if (!showBanner) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4">
-      <div className="bg-primary text-primary-foreground rounded-lg shadow-lg p-4 flex items-center justify-between gap-4">
-        <div className="flex-1">
-          <p className="font-semibold">Update verfügbar</p>
-          <p className="text-sm opacity-90">Eine neue Version ist verfügbar. Jetzt aktualisieren?</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={handleUpdate}
-            size="sm"
-            variant="secondary"
-            className="whitespace-nowrap"
-          >
-            Aktualisieren
-          </Button>
-          <Button
-            onClick={handleDismiss}
-            size="sm"
-            variant="ghost"
-            className="p-2"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+    <div className="fixed top-0 left-0 right-0 z-50 bg-primary text-primary-foreground shadow-lg">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <RefreshCw className="h-5 w-5" />
+            <p className="text-sm font-medium">
+              Ein neues Update ist verfügbar! Aktualisiere die App, um die neueste Version zu nutzen.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleUpdate}
+              className="whitespace-nowrap"
+            >
+              Jetzt aktualisieren
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDismiss}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
