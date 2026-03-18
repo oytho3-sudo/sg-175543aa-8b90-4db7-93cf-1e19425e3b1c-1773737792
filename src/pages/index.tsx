@@ -1,52 +1,58 @@
-import { SEO } from "@/components/SEO";
 import Link from "next/link";
-import { FileText, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SEO } from "@/components/SEO";
+import { FileText, ClipboardList } from "lucide-react";
 
 export default function Home() {
   return (
     <>
-      <SEO 
-        title="GERLIEVA Sprühtechnik GmbH"
-        description="Professionelle Sprühtechnik-Lösungen und Service"
+      <SEO
+        title="Gerlieva App - Startseite"
+        description="Willkommen bei der Gerlieva App für Service-Berichte"
       />
       
-      <main className="min-h-screen bg-navy flex items-center justify-center p-4">
-        <div className="text-center space-y-12 max-w-2xl">
-          <div className="space-y-4">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-lightgray tracking-tight">
-              GERLIEVA
-            </h1>
-            <p className="text-2xl md:text-3xl text-lightgray/90 font-semibold">
-              Sprühtechnik GmbH
-            </p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="container px-4 py-16">
+          <div className="max-w-2xl mx-auto text-center space-y-8">
+            <div className="space-y-4">
+              <h1 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-magenta bg-clip-text text-transparent">
+                Gerlieva App
+              </h1>
+              <p className="text-xl text-muted-foreground">
+                Service-Berichte und Protokolle verwalten
+              </p>
+            </div>
 
-          <div className="pt-8">
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
               <Link href="/service-bericht">
                 <Button 
-                  size="lg"
-                  className="bg-magenta hover:bg-magenta/90 text-white font-semibold text-lg px-12 py-6 h-auto rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                  size="lg" 
+                  className="w-full sm:w-auto text-lg px-8 py-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all"
                 >
-                  <FileText className="mr-3 h-6 w-6" />
-                  Service Bericht
+                  <FileText className="mr-2 h-5 w-5" />
+                  Service-Bericht
                 </Button>
               </Link>
-              
-              <Link href="/service-bericht">
+
+              <Link href="/protokolle">
                 <Button 
-                  size="lg"
-                  className="bg-magenta hover:bg-magenta/90 text-white font-semibold text-lg px-12 py-6 h-auto rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                  size="lg" 
+                  variant="outline"
+                  className="w-full sm:w-auto text-lg px-8 py-6 border-2 hover:bg-magenta/10 hover:border-magenta shadow-lg hover:shadow-xl transition-all"
                 >
-                  <ClipboardList className="mr-3 h-6 w-6" />
+                  <ClipboardList className="mr-2 h-5 w-5" />
                   Protokolle
                 </Button>
               </Link>
             </div>
+
+            <div className="pt-12 text-sm text-muted-foreground">
+              <p>Erstellen Sie professionelle Service-Berichte</p>
+              <p>und verwalten Sie Ihre Protokoll-Dateien</p>
+            </div>
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }
