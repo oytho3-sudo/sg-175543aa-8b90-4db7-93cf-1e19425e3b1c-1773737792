@@ -8,7 +8,7 @@ export default function Home() {
     <>
       <SEO
         title="Gerlieva App - Startseite"
-        description="Willkommen bei der Gerlieva App für Service-Berichte"
+        description="Willkommen bei der Gerlieva App"
       />
       
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
@@ -44,11 +44,6 @@ export default function Home() {
                   Protokolle
                 </Button>
               </Link>
-            </div>
-
-            <div className="pt-12 text-sm text-muted-foreground">
-              <p>Erstellen Sie detaillierte Service-Berichte mit Fotos,</p>
-              <p>Unterschriften und allen wichtigen Informationen</p>
             </div>
           </div>
         </div>
