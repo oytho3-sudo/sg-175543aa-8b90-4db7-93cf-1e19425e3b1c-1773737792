@@ -21,7 +21,7 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-              <Link href="/service-bericht">
+              <Link href="/ServiceberichtPage">
                 <Button 
                   size="lg" 
                   className="w-full sm:w-auto text-lg px-8 py-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all"
