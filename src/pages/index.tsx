@@ -1,6 +1,6 @@
 import { SEO } from "@/components/SEO";
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import { FileText, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
@@ -23,15 +23,27 @@ export default function Home() {
           </div>
 
           <div className="pt-8">
-            <Link href="/service-bericht">
-              <Button 
-                size="lg"
-                className="bg-orange hover:bg-orange/90 text-white font-semibold text-lg px-12 py-6 h-auto rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
-              >
-                <FileText className="mr-3 h-6 w-6" />
-                Service Bericht
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/service-bericht">
+                <Button 
+                  size="lg"
+                  className="bg-magenta hover:bg-magenta/90 text-white font-semibold text-lg px-12 py-6 h-auto rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                >
+                  <FileText className="mr-3 h-6 w-6" />
+                  Service Bericht
+                </Button>
+              </Link>
+              
+              <Link href="/service-bericht">
+                <Button 
+                  size="lg"
+                  className="bg-magenta hover:bg-magenta/90 text-white font-semibold text-lg px-12 py-6 h-auto rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                >
+                  <ClipboardList className="mr-3 h-6 w-6" />
+                  Protokolle
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </main>
