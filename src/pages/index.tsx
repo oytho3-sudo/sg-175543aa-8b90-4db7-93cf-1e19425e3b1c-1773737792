@@ -7,8 +7,8 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="Gerlieva App - Startseite"
-        description="Willkommen bei der Gerlieva App"
+        title="GERLIEVA App - Startseite"
+        description="Willkommen bei der GERLIEVA App"
       />
       
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
@@ -16,7 +16,7 @@ export default function Home() {
           <div className="max-w-2xl mx-auto text-center space-y-8">
             <div className="space-y-4">
               <h1 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-magenta bg-clip-text text-transparent">
-                Gerlieva App
+                GERLIEVA App
               </h1>
             </div>
 
