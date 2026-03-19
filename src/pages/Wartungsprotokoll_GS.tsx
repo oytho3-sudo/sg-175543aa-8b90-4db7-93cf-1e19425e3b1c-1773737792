@@ -657,17 +657,26 @@ function SignatureModal({ label, existing, onClose, t }: SigModalProps) {
     const resize = () => {
       const container = canvas.parentElement!;
       const dpr = window.devicePixelRatio || 1;
-      const w = container.clientWidth - 16, h = container.clientHeight - 16;
+      const w = Math.max(container.clientWidth - 16, 100);
+      const h = Math.max(container.clientHeight - 16, 80);
+      // Aktuellen Inhalt retten bevor Canvas-Größe geändert wird
       const tmp = document.createElement('canvas');
       tmp.width = canvas.width; tmp.height = canvas.height;
       tmp.getContext('2d')!.drawImage(canvas, 0, 0);
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
       canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-      const ctx = canvas.getContext('2d')!; ctx.scale(dpr, dpr); ctx.drawImage(tmp, 0, 0, w, h);
+      const ctx = canvas.getContext('2d')!;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+      // Alten Inhalt maßstabsgerecht zurückzeichnen
+      const oldW = tmp.width / dpr, oldH = tmp.height / dpr;
+      ctx.drawImage(tmp, 0, 0, oldW, oldH, 0, 0, w, h);
     };
-    setTimeout(resize, 150);
+    setTimeout(resize, 50);
+    const observer = new ResizeObserver(() => resize());
+    if (canvas.parentElement) observer.observe(canvas.parentElement);
     window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    return () => { observer.disconnect(); window.removeEventListener('resize', resize); };
   }, []);
 
   useEffect(() => {
@@ -682,7 +691,10 @@ function SignatureModal({ label, existing, onClose, t }: SigModalProps) {
 
   const getPos = (e: React.MouseEvent | React.TouchEvent, c: HTMLCanvasElement) => {
     const r = c.getBoundingClientRect(), src = 'touches' in e ? e.touches[0] : e;
-    return { x: src.clientX - r.left, y: src.clientY - r.top };
+    // Skalierung berücksichtigen: canvas kann via CSS kleiner dargestellt sein als intern
+    const scaleX = c.width  / (window.devicePixelRatio || 1) / r.width;
+    const scaleY = c.height / (window.devicePixelRatio || 1) / r.height;
+    return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
   };
   const onStart = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); drawing.current = true; const c = canvasRef.current!; const ctx = c.getContext('2d')!; const p = getPos(e, c); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
   const onMove  = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); if (!drawing.current) return; const c = canvasRef.current!; const ctx = c.getContext('2d')!; const p = getPos(e, c); ctx.lineTo(p.x, p.y); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); };
@@ -718,8 +730,10 @@ function SigPreview({ dataUrl, onClick, tapLabel }: { dataUrl?: string; onClick:
   const redraw = useCallback(() => {
     const canvas = canvasRef.current; if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    const w = rect.width || 300, h = rect.height || 90;
+    // parentElement-Breite als zuverlässigere Quelle – getBoundingClientRect kann 0 liefern wenn noch nicht gerendert
+    const parent = canvas.parentElement;
+    const w = (parent ? parent.clientWidth : canvas.offsetWidth) || 300;
+    const h = (parent ? parent.clientHeight : canvas.offsetHeight) || 75;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     const ctx = canvas.getContext('2d')!;
@@ -733,9 +747,13 @@ function SigPreview({ dataUrl, onClick, tapLabel }: { dataUrl?: string; onClick:
   }, [dataUrl, tapLabel]);
 
   useEffect(() => {
-    setTimeout(redraw, 50);
+    // Mehrfach versuchen – Layout kann beim ersten Render noch nicht stabil sein
+    const t1 = setTimeout(redraw, 50);
+    const t2 = setTimeout(redraw, 300);
+    const observer = new ResizeObserver(() => redraw());
+    if (canvasRef.current?.parentElement) observer.observe(canvasRef.current.parentElement);
     window.addEventListener('resize', redraw);
-    return () => window.removeEventListener('resize', redraw);
+    return () => { clearTimeout(t1); clearTimeout(t2); observer.disconnect(); window.removeEventListener('resize', redraw); };
   }, [redraw]);
 
   return (
@@ -847,8 +865,32 @@ const printStyles = `
     .sig-print-img   { display: block !important; width: 100% !important; height: auto !important; max-height: 80px; object-fit: contain; border: 1px solid #000; }
     .sig-print-empty { display: block !important; width: 100% !important; height: 60px !important; border: 1px solid #000; background: white; }
   }
+
+  /* ── Schwarze Felder verhindern (Dark Mode / Android Chrome) ── */
+  input[type="date"],
+  input[type="time"],
+  input[type="month"] {
+    background-color: transparent !important;
+    color: #000 !important;
+    color-scheme: light !important;
+  }
+  select {
+    color-scheme: light !important;
+    color: #000 !important;
+  }
+
+  /* ── Kleine Screens (Handy Hochformat) ── */
   @media screen and (max-width: 600px) {
     .toolbar-title { display: none; }
+    #page-wrapper  { padding: 4px !important; }
+    .a4            { padding: 4mm 4mm !important; }
+  }
+
+  /* ── Handy Querformat ── */
+  @media screen and (max-width: 900px) and (orientation: landscape) {
+    .toolbar-title { display: none; }
+    #page-wrapper  { padding: 4px !important; }
+    .a4            { padding: 6mm 6mm !important; font-size: 90% !important; }
   }
 `;
 
@@ -869,7 +911,20 @@ export default function WartungsprotokollPage() {
   const [form, setForm]         = useState<FormData>(initialForm);
   const [sigModal, setSigModal] = useState<{ id: 'sig-gerlieva' | 'sig-kunde'; label: string } | null>(null);
   const [toast, setToast]       = useState<{ msg: string; type: 'success' | 'error' | ''; visible: boolean }>({ msg: '', type: '', visible: false });
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef  = useRef<HTMLInputElement>(null);
+  const toolbarRef    = useRef<HTMLDivElement>(null);
+
+  // Dynamisches marginTop: passt sich an wenn Toolbar durch Wrap höher wird
+  useEffect(() => {
+    const toolbar = document.getElementById('toolbar');
+    const wrapper = document.getElementById('page-wrapper');
+    if (!toolbar || !wrapper) return;
+    const observer = new ResizeObserver(() => {
+      wrapper.style.marginTop = toolbar.offsetHeight + 8 + 'px';
+    });
+    observer.observe(toolbar);
+    return () => observer.disconnect();
+  }, []);
 
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type, visible: true });
@@ -890,7 +945,18 @@ export default function WartungsprotokollPage() {
     setForm(f => {
       const m = f.monteure.map((mo, i) => {
         if (i !== mi) return mo;
-        const tage = mo.tage.map((tag, j) => j === ti ? { ...tag, [key]: val } : tag);
+        const tage = mo.tage.map((tag, j) => {
+          if (j !== ti) return tag;
+          const updated = { ...tag, [key]: val };
+          if (key === 'datum' && val) {
+            const dow = new Date(val).getDay();
+            const autoTyp = dow === 6 ? 'samstag' : dow === 0 ? 'sonntag' : '';
+            if (tag.tagTyp !== 'feiertag') {
+              updated.tagTyp = autoTyp as MontagTag['tagTyp'];
+            }
+          }
+          return updated;
+        });
         return { ...mo, tage };
       });
       return { ...f, monteure: m };
@@ -948,9 +1014,14 @@ export default function WartungsprotokollPage() {
     try {
       const blob = new Blob([JSON.stringify(collectFormData(), null, 2)], { type: 'application/json' });
       const file = new File([blob], getFileNameFn('json'), { type: 'application/json' });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      // Natives Teilen (Android, iOS Safari 15+)
+      const canNativeShare = typeof navigator.share === 'function' &&
+        typeof navigator.canShare === 'function' &&
+        navigator.canShare({ files: [file] });
+      if (canNativeShare) {
         await navigator.share({ title: t.labelWartungShare, files: [file] });
       } else {
+        // Fallback: direkt herunterladen (Desktop, ältere Browser)
         const url = URL.createObjectURL(blob);
         const a   = document.createElement('a'); a.href = url; a.download = getFileNameFn('json');
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
@@ -958,6 +1029,7 @@ export default function WartungsprotokollPage() {
         showToast(t.toastDownloaded, 'success');
       }
     } catch (err: unknown) {
+      // AbortError = User hat Teilen-Dialog geschlossen → kein Fehler zeigen
       if ((err as Error).name !== 'AbortError') showToast(t.toastError + (err as Error).message, 'error');
     }
   };
@@ -1006,8 +1078,10 @@ export default function WartungsprotokollPage() {
     fontFamily: 'Arial, sans-serif', fontSize: 8, background: 'transparent', padding: 0, ...extra,
   });
   const tbtn = (bg: string): React.CSSProperties => ({
-    border: 'none', padding: '6px 16px', fontSize: 9, fontWeight: 'bold',
+    border: 'none', padding: '7px 12px', fontSize: 9, fontWeight: 'bold',
     borderRadius: 3, cursor: 'pointer', fontFamily: 'Arial, sans-serif', color: '#fff', background: bg,
+    whiteSpace: 'nowrap', flexShrink: 0, minHeight: 32, touchAction: 'manipulation',
+    WebkitTapHighlightColor: 'transparent',
   });
 
   // ── Spezialzeilen (0-Punkt, Batterie, Druck) kommen nach alleZeilen ──────
@@ -1106,13 +1180,13 @@ export default function WartungsprotokollPage() {
       <style>{printStyles}</style>
 
       {/* ── Toolbar ── */}
-      <div className="no-print" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#1a2744', padding: '7px 18px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      <div id="toolbar" className="no-print" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#1a2744', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', boxSizing: 'border-box' }}>
         <button onClick={() => fileInputRef.current?.click()} style={tbtn('#8e24aa')}>{t.loadJson}</button>
         <button onClick={handlePdf}   style={tbtn('#e8460a')}>{t.savePdf}</button>
         <button onClick={handleShare} style={tbtn('#1a7a3a')}>{t.shareJson}</button>
         <button onClick={handleSave}  style={tbtn('#1a5fa8')}>{t.saveJson}</button>
-        <span className="toolbar-title" style={{ color: '#a8b8d8', fontSize: 9 }}>{t.toolbarTitle}</span>
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span className="toolbar-title" style={{ color: '#a8b8d8', fontSize: 9, flexShrink: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{t.toolbarTitle}</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <LangSwitcher current={lang} onChange={setLang} />
           <a href="/" style={{ ...tbtn('#1a5fa8'), textDecoration: 'none' }}>{t.home}</a>
         </div>
@@ -1120,7 +1194,7 @@ export default function WartungsprotokollPage() {
       </div>
 
       {/* ── Seiten ── */}
-      <div id="page-wrapper" style={{ marginTop: 46, padding: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+      <div id="page-wrapper" style={{ marginTop: 56, padding: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
 
         {/* ══════════════ SEITE 1 ══════════════ */}
         <div className="a4" style={{ width: 'min(210mm, 100%)', background: '#fff', padding: '10mm 11mm', boxShadow: '0 3px 16px rgba(0,0,0,.25)', boxSizing: 'border-box' }}>
@@ -1165,7 +1239,7 @@ export default function WartungsprotokollPage() {
                 <th style={thStyle}>{t.labelBaujahr}</th>
                 <td style={{ ...cellStyle, width: 72 }}>
                   <input type="month" value={form.baujahr} onChange={e => setField('baujahr', e.target.value)}
-                    style={{ border: 'none', outline: 'none', fontFamily: 'Arial', fontSize: 7.5, background: 'transparent', padding: 0, width: 70, height: 16, cursor: 'pointer' }} />
+                    style={{ border: 'none', outline: 'none', fontFamily: 'Arial', fontSize: 7.5, background: 'transparent', color: '#000', colorScheme: 'light', padding: 0, width: 70, height: 16, cursor: 'pointer' }} />
                 </td>
               </tr>
             </tbody>
@@ -1200,7 +1274,7 @@ export default function WartungsprotokollPage() {
         </div>
 
         {/* ══════════════ SEITE 2: Fuß + Unterschriften ══════════════ */}
-        <div className="a4" style={{ width: 'min(210mm, 100%)', background: '#fff', padding: '10mm 11mm', boxShadow: '0 3px 16px rgba(0,0,0,.25)', boxSizing: 'border-box' }}>
+        <div className="a4" style={{ width: 'min(210mm, 100%)', background: '#fff', padding: '10mm 11mm', boxShadow: '0 3px 16px rgba(0,0,0,.25)', boxSizing: 'border-box', overflow: 'hidden' }}>
 
           {/* Zeitenerfassung – pro Monteur ein Block */}
           <div style={{ marginBottom: 10 }}>
@@ -1279,15 +1353,15 @@ export default function WartungsprotokollPage() {
                           <tr key={ti} style={{ background: ti % 2 === 0 ? '#fff' : '#f8f8f8' }}>
                             <td style={{ ...cellStyle, fontSize: 8 }}>
                               <input type="date" value={tag.datum} onChange={e => setMontagTag(mi, ti, 'datum', e.target.value)}
-                                style={{ ...inp(), fontSize: 7.5, cursor: 'pointer' }} />
+                                style={{ ...inp(), fontSize: 7.5, cursor: 'pointer', colorScheme: 'light', color: '#000' }} />
                             </td>
                             <td style={{ ...cellStyle, fontSize: 8, textAlign: 'center' }}>
                               <input type="time" value={tag.vonZeit} onChange={e => setMontagTag(mi, ti, 'vonZeit', e.target.value)}
-                                style={{ ...inp(), textAlign: 'center', cursor: 'pointer' }} />
+                                style={{ ...inp(), textAlign: 'center', cursor: 'pointer', colorScheme: 'light', color: '#000' }} />
                             </td>
                             <td style={{ ...cellStyle, fontSize: 8, textAlign: 'center' }}>
                               <input type="time" value={tag.bisZeit} onChange={e => setMontagTag(mi, ti, 'bisZeit', e.target.value)}
-                                style={{ ...inp(), textAlign: 'center', cursor: 'pointer' }} />
+                                style={{ ...inp(), textAlign: 'center', cursor: 'pointer', colorScheme: 'light', color: '#000' }} />
                             </td>
                             <td style={{ ...cellStyle, fontSize: 8, textAlign: 'center' }}>
                               <input type="number" min={0} value={tag.pauseMin} onChange={e => setMontagTag(mi, ti, 'pauseMin', e.target.value)}
@@ -1421,16 +1495,16 @@ export default function WartungsprotokollPage() {
           </div>
 
           {/* Unterschriften */}
-          <div style={{ marginTop: 12, border: '1px solid #000', padding: 10 }}>
+          <div style={{ marginTop: 12, border: '1px solid #000', padding: 10, boxSizing: 'border-box' }}>
             <strong style={{ fontSize: 9, letterSpacing: '.03em' }}>{t.sectionSign}</strong>
-            <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
+            <div style={{ display: 'flex', gap: 12, marginTop: 10, width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
               {(['sig-gerlieva', 'sig-kunde'] as const).map(id => {
                 const isGerlieva  = id === 'sig-gerlieva';
                 const label       = isGerlieva ? t.sigGerlieva : t.sigKunde;
                 const nameKey     = isGerlieva ? 'nameGerlieva' : 'nameKunde';
                 const placeholder = isGerlieva ? t.sigPlaceholderTech : t.sigPlaceholderKunde;
                 return (
-                  <div key={id} style={{ flex: 1, border: '1px solid #ccc', borderRadius: 4, padding: 8, background: '#fafafa' }}>
+                  <div key={id} style={{ flex: '1 1 0', minWidth: 0, border: '1px solid #ccc', borderRadius: 4, padding: 8, background: '#fafafa', boxSizing: 'border-box', overflow: 'hidden' }}>
                     <div style={{ fontSize: 8, fontWeight: 'bold', marginBottom: 4 }}>{label}</div>
                     <SigPreview dataUrl={form.signatures[id]} onClick={() => setSigModal({ id, label })} tapLabel={t.sigTap} />
                     <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1449,7 +1523,7 @@ export default function WartungsprotokollPage() {
             <div style={{ textAlign: 'center', marginTop: 12, fontWeight: 'bold', fontSize: 11 }}>
               {t.labelDatum}{' '}
               <input type="date" value={form.signatureDate} onChange={e => setField('signatureDate', e.target.value)}
-                style={{ border: '1px solid #ccc', padding: '4px 8px', borderRadius: 4, fontSize: 11 }} />
+                style={{ border: '1px solid #ccc', padding: '4px 8px', borderRadius: 4, fontSize: 11, colorScheme: 'light', color: '#000' }} />
             </div>
           </div>
 

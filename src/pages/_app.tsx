@@ -2,13 +2,15 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
-import { UpdateBanner } from "@/components/UpdateBanner";
+import { UpdateToast } from "@/components/UpdateToast";
 import { LoginScreen } from "@/components/LoginScreen";
 import { useEffect, useState } from "react";
+import { registerSW } from "@/lib/swUpdate";
 
 export default function App({ Component, pageProps }: AppProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
     // Prüfen ob App installiert ist (PWA) oder im Browser läuft
@@ -22,22 +24,11 @@ export default function App({ Component, pageProps }: AppProps) {
     setIsAuthenticated(authenticated === "true");
     setIsLoading(false);
 
-    // Service Worker Registration
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      if (window.location.protocol !== "https:" && window.location.hostname !== "localhost") {
-        console.warn("Service Workers require HTTPS");
-        return;
-      }
-
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("Service Worker registered:", registration);
-        })
-        .catch((error) => {
-          console.error("Service Worker registration failed:", error);
-        });
-    }
+    // Service Worker Registration mit Update-Callback
+    registerSW((reg) => {
+      console.log("👉 Update verfügbar");
+      setRegistration(reg);
+    });
   }, []);
 
   const handleLogin = () => {
@@ -59,9 +50,11 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider>
-      <UpdateBanner />
       <Component {...pageProps} />
       <Toaster />
+      
+      {/* 🔔 Update Toast */}
+      <UpdateToast registration={registration} />
     </ThemeProvider>
   );
 }
