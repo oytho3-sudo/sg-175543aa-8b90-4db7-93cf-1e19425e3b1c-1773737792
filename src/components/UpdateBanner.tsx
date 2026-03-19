@@ -15,47 +15,38 @@ export function UpdateBanner() {
     navigator.serviceWorker.ready.then((reg) => {
       setRegistration(reg);
 
-      // Prüfe auf wartenden Service Worker
+      // Prüfe auf wartenden Service Worker beim Start
       if (reg.waiting) {
+        console.log('[UpdateBanner] Found waiting service worker on startup');
         setShowBanner(true);
       }
 
       // Neue Updates erkennen
       reg.addEventListener("updatefound", () => {
+        console.log('[UpdateBanner] Update found, new worker installing');
         const newWorker = reg.installing;
         if (newWorker) {
           newWorker.addEventListener("statechange", () => {
+            console.log('[UpdateBanner] New worker state:', newWorker.state);
             if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
               // Neues Update verfügbar - Banner anzeigen
+              console.log('[UpdateBanner] New update available, showing banner');
               setShowBanner(true);
             }
           });
         }
       });
 
-      // Regelmäßig nach Updates suchen (alle 60 Sekunden)
-      const interval = setInterval(() => {
-        reg.update();
-      }, 60000);
-
-      // Bei Sichtbarkeit der Seite nach Updates suchen
-      const handleVisibilityChange = () => {
-        if (!document.hidden) {
-          reg.update();
-        }
-      };
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-
-      return () => {
-        clearInterval(interval);
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-      };
+      // Manuell nach Updates suchen (nur einmal beim Start)
+      console.log('[UpdateBanner] Checking for updates');
+      reg.update();
     });
 
     // Reload NUR wenn Benutzer bestätigt hat
     let refreshing = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (!refreshing) {
+        console.log('[UpdateBanner] Controller changed, reloading page');
         refreshing = true;
         window.location.reload();
       }
@@ -63,14 +54,19 @@ export function UpdateBanner() {
   }, []);
 
   const handleUpdate = () => {
-    if (!registration?.waiting) return;
+    if (!registration?.waiting) {
+      console.error('[UpdateBanner] No waiting worker found');
+      return;
+    }
 
+    console.log('[UpdateBanner] User confirmed update, posting SKIP_WAITING');
     // Benutzer hat bestätigt - jetzt Update durchführen
     registration.waiting.postMessage({ type: "SKIP_WAITING" });
     setShowBanner(false);
   };
 
   const handleDismiss = () => {
+    console.log('[UpdateBanner] User dismissed update banner');
     setShowBanner(false);
   };
 
