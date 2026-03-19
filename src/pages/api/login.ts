@@ -11,38 +11,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { username, password } = req.body;
 
-    // Debug-Ausgabe
     console.log("=== LOGIN DEBUG ===");
-    console.log("Eingabe Username:", username);
-    console.log("Erwartet Username:", process.env.AUTH_USERNAME);
-    console.log("Hash aus ENV:", process.env.AUTH_PASSWORD_HASH?.substring(0, 20) + "...");
+    console.log("Username eingegeben:", username);
+    console.log("Passwort eingegeben:", password ? "***" : "leer");
 
     // Username prüfen
     if (username !== process.env.AUTH_USERNAME) {
-      console.log("❌ Username stimmt nicht überein");
+      console.log("❌ Username falsch");
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // Passwort prüfen
     const passwordHash = process.env.AUTH_PASSWORD_HASH;
     if (!passwordHash) {
-      console.log("❌ AUTH_PASSWORD_HASH fehlt in .env.local");
+      console.log("❌ AUTH_PASSWORD_HASH nicht gesetzt");
       return res.status(500).json({ error: "Server configuration error" });
     }
 
-    console.log("Vergleiche Passwort mit Hash...");
     const valid = await bcrypt.compare(password, passwordHash);
-    console.log("Passwort gültig?", valid);
+    console.log("Passwort korrekt?", valid);
 
     if (!valid) {
-      console.log("❌ Passwort ungültig");
+      console.log("❌ Passwort falsch");
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // Token erstellen
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      console.log("❌ JWT_SECRET fehlt in .env.local");
+      console.log("❌ JWT_SECRET nicht gesetzt");
       return res.status(500).json({ error: "Server configuration error" });
     }
 
@@ -52,13 +49,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { expiresIn: "1h" }
     );
 
-    // HttpOnly Cookie setzen
+    // Cookie setzen
     res.setHeader("Set-Cookie", cookie.serialize("auth_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
-      maxAge: 60 * 60, // 1 Stunde
+      maxAge: 60 * 60,
     }));
 
     console.log("✅ Login erfolgreich");
