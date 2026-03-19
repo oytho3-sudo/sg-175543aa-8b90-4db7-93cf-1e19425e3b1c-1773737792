@@ -68,6 +68,7 @@ const translations = {
     tagTypFeiertag: 'Feiertag',
     tagTypSamstag:  'Samstag',
     tagTypSonntag:  'Sonntag',
+    tagTypNacht:    'Nachtstunden',
     nullPunktTitle: '0-Punkt Markierung:',
     nullHor:        'Hor.',
     nullVert:       'Vert.',
@@ -184,6 +185,7 @@ const translations = {
     tagTypFeiertag: 'Holiday',
     tagTypSamstag:  'Saturday',
     tagTypSonntag:  'Sunday',
+    tagTypNacht:    'Night hours',
     nullPunktTitle: 'Zero-Point Marking:',
     nullHor:        'Hor.',
     nullVert:       'Vert.',
@@ -298,6 +300,7 @@ const translations = {
     tagTypFeiertag: 'Jour férié',
     tagTypSamstag:  'Samedi',
     tagTypSonntag:  'Dimanche',
+    tagTypNacht:    'Heures de nuit',
     nullPunktTitle: 'Marquage point zéro :',
     nullHor:        'Hor.',
     nullVert:       'Vert.',
@@ -514,6 +517,23 @@ function calcNettoMin(tag: MontagTag): number {
   return diff > 0 ? diff - pause : 0;
 }
 
+// Nachtstunden: Minuten vor 06:00 und nach 20:00 (ohne Pause-Anteil)
+function calcNachtMin(tag: MontagTag): number {
+  if (!tag.vonZeit || !tag.bisZeit) return 0;
+  const [vh, vm] = tag.vonZeit.split(':').map(Number);
+  const [bh, bm] = tag.bisZeit.split(':').map(Number);
+  const von  = vh * 60 + vm;
+  const bis  = bh * 60 + bm;
+  if (bis <= von) return 0;
+  const NACHT_START = 20 * 60; // 20:00
+  const NACHT_ENDE  =  6 * 60; //  6:00
+  // Minuten vor 06:00
+  const vorSechs = von < NACHT_ENDE ? Math.min(bis, NACHT_ENDE) - von : 0;
+  // Minuten nach 20:00
+  const nachZwanzig = bis > NACHT_START ? bis - Math.max(von, NACHT_START) : 0;
+  return Math.max(0, vorSechs + nachZwanzig);
+}
+
 function formatMin(min: number): string {
   if (min <= 0) return '';
   return `${String(Math.floor(min / 60)).padStart(2, '0')} h ${String(min % 60).padStart(2, '0')} min`;
@@ -523,6 +543,19 @@ function calcGesamtMinutes(monteure: Monteur[]): string {
   let total = 0;
   monteure.forEach(m => m.tage.forEach(tag => { total += calcNettoMin(tag); }));
   return formatMin(total);
+}
+
+function calcGesamtBreakdown(monteure: Monteur[]): { total: number; samstag: number; sonntag: number; feiertag: number; nacht: number } {
+  let total = 0, samstag = 0, sonntag = 0, feiertag = 0, nacht = 0;
+  monteure.forEach(m => m.tage.forEach(tag => {
+    const min = calcNettoMin(tag);
+    total += min;
+    if (tag.tagTyp === 'samstag')  samstag  += min;
+    if (tag.tagTyp === 'sonntag')  sonntag  += min;
+    if (tag.tagTyp === 'feiertag') feiertag += min;
+    nacht += calcNachtMin(tag);
+  }));
+  return { total, samstag, sonntag, feiertag, nacht };
 }
 
 function buildFileName(ext: string, maschineNr: string): string {
@@ -962,7 +995,8 @@ export default function WartungsprotokollPage() {
     setForm(f => { const s = { ...f.signatures }; delete s[id]; return { ...f, signatures: s }; });
 
   // ── Computed ───────────────────────────────────────────────────────────────
-  const gesamtAZ = calcGesamtMinutes(form.monteure);
+  const gesamtAZ        = calcGesamtMinutes(form.monteure);
+  const gesamtBreakdown = calcGesamtBreakdown(form.monteure);
 
   // ── Styles ─────────────────────────────────────────────────────────────────
   const cellStyle: React.CSSProperties = { border: '1px solid #000', padding: '1px 3px', verticalAlign: 'top', wordBreak: 'break-word', lineHeight: 1.3, fontSize: 8.5 };
@@ -1224,8 +1258,7 @@ export default function WartungsprotokollPage() {
                       <col style={{ width: '14%' }} />
                       <col style={{ width: '11%' }} />
                       <col style={{ width: '16%' }} />
-                      <col style={{ width: '17%' }} />
-                      <col style={{ width: '8%' }} />
+                      <col style={{ width: '25%' }} />
                     </colgroup>
                     {mi === 0 && (
                       <thead>
@@ -1236,7 +1269,6 @@ export default function WartungsprotokollPage() {
                           <th style={{ ...thStyle, textAlign: 'center', fontSize: 7.5, background: '#e0e0e0' }}>{t.thPause}</th>
                           <th style={{ ...thStyle, textAlign: 'center', fontSize: 7.5, background: '#e0f0e0' }}>{t.labelGesamtAZ}</th>
                           <th style={{ ...thStyle, textAlign: 'center', fontSize: 7.5, background: '#e0e0e0' }}>{t.thTagTyp}</th>
-                          <th style={{ ...thStyle, textAlign: 'center', fontSize: 7.5, background: '#e0e0e0' }}></th>
                         </tr>
                       </thead>
                     )}
@@ -1289,15 +1321,6 @@ export default function WartungsprotokollPage() {
                                 );
                               })()}
                             </td>
-                            <td style={{ ...cellStyle, textAlign: 'center', padding: 2 }}>
-                              <button
-                                onClick={() => removeTag(mi, ti)}
-                                disabled={monteur.tage.length <= 1}
-                                className="no-print"
-                                style={{ fontSize: 10, lineHeight: 1, padding: '1px 5px', background: monteur.tage.length > 1 ? '#fdd' : '#eee', border: '1px solid #bbb', borderRadius: 3, cursor: monteur.tage.length > 1 ? 'pointer' : 'default', color: monteur.tage.length > 1 ? '#900' : '#999' }}>
-                                {t.btnTagEntf}
-                              </button>
-                            </td>
                           </tr>
                         );
                       })}
@@ -1321,13 +1344,50 @@ export default function WartungsprotokollPage() {
             })}
 
             {/* Gesamt-Summe */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 6, padding: '5px 8px', border: '1px solid #aaa', borderRadius: 4, background: '#f7f7f7' }}>
+              {/* Gesamt */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <strong style={{ fontSize: 9 }}>{t.labelGesamtAZ}</strong>
                 <span style={{ fontWeight: 'bold', fontSize: 10, background: '#e8f4e8', padding: '2px 10px', borderRadius: 3, border: '1px solid #aaa' }}>
                   {gesamtAZ}
                 </span>
               </div>
+              {/* Samstag – nur wenn > 0 */}
+              {gesamtBreakdown.samstag > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 8, color: '#555' }}>{t.tagTypSamstag}:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: 9, background: '#ddeeff', padding: '2px 8px', borderRadius: 3, border: '1px solid #99bbdd' }}>
+                    {formatMin(gesamtBreakdown.samstag)}
+                  </span>
+                </div>
+              )}
+              {/* Sonntag – nur wenn > 0 */}
+              {gesamtBreakdown.sonntag > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 8, color: '#555' }}>{t.tagTypSonntag}:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: 9, background: '#fde8e8', padding: '2px 8px', borderRadius: 3, border: '1px solid #ddaaaa' }}>
+                    {formatMin(gesamtBreakdown.sonntag)}
+                  </span>
+                </div>
+              )}
+              {/* Feiertag – nur wenn > 0 */}
+              {gesamtBreakdown.feiertag > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 8, color: '#555' }}>{t.tagTypFeiertag}:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: 9, background: '#fff3cd', padding: '2px 8px', borderRadius: 3, border: '1px solid #ddcc88' }}>
+                    {formatMin(gesamtBreakdown.feiertag)}
+                  </span>
+                </div>
+              )}
+              {/* Nachtstunden – nur wenn > 0 */}
+              {gesamtBreakdown.nacht > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 8, color: '#555' }}>{t.tagTypNacht}:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: 9, background: '#e8e0f8', padding: '2px 8px', borderRadius: 3, border: '1px solid #aa99cc' }}>
+                    {formatMin(gesamtBreakdown.nacht)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

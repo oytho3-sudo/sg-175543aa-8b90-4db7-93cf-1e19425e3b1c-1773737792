@@ -19,22 +19,9 @@ export default function App({ Component, pageProps }: AppProps) {
         .then((registration) => {
           console.log("Service Worker registered:", registration);
           
-          // Check for updates immediately
-          registration.update();
+          // KEINE automatischen Update-Checks mehr
+          // Updates werden nur geprüft wenn der Benutzer die Seite neu lädt
           
-          // Set up periodic update checks
-          const updateInterval = setInterval(() => {
-            registration.update();
-          }, 60000); // Check every 60 seconds
-
-          // Also check when page becomes visible
-          document.addEventListener("visibilitychange", () => {
-            if (!document.hidden) {
-              registration.update();
-            }
-          });
-
-          return () => clearInterval(updateInterval);
         })
         .catch((error) => {
           console.error("Service Worker registration failed:", error);
