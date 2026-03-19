@@ -11,8 +11,14 @@ export default function App({ Component, pageProps }: AppProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // SessionStorage statt localStorage - wird beim Schließen des Tabs/Browsers gelöscht
-    const authenticated = sessionStorage.getItem("gerlieva_authenticated");
+    // Prüfen ob App installiert ist (PWA) oder im Browser läuft
+    const isInstalled = window.matchMedia("(display-mode: standalone)").matches;
+    
+    // Bei installierter PWA: localStorage (persistent)
+    // Im Browser: sessionStorage (nur für aktuelle Session)
+    const storage = isInstalled ? localStorage : sessionStorage;
+    const authenticated = storage.getItem("gerlieva_authenticated");
+    
     setIsAuthenticated(authenticated === "true");
     setIsLoading(false);
 
@@ -35,7 +41,11 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
 
   const handleLogin = () => {
-    sessionStorage.setItem("gerlieva_authenticated", "true");
+    // Prüfen ob App installiert ist
+    const isInstalled = window.matchMedia("(display-mode: standalone)").matches;
+    const storage = isInstalled ? localStorage : sessionStorage;
+    
+    storage.setItem("gerlieva_authenticated", "true");
     setIsAuthenticated(true);
   };
 
