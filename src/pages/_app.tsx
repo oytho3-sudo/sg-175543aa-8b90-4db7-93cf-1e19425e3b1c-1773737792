@@ -13,30 +13,28 @@ export default function App({ Component, pageProps }: AppProps) {
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    // Prüfen ob App installiert ist (PWA) oder im Browser läuft
-    const isInstalled = window.matchMedia("(display-mode: standalone)").matches;
-    
-    // Bei installierter PWA: localStorage (persistent)
-    // Im Browser: sessionStorage (nur für aktuelle Session)
-    const storage = isInstalled ? localStorage : sessionStorage;
-    const authenticated = storage.getItem("gerlieva_authenticated");
-    
-    setIsAuthenticated(authenticated === "true");
-    setIsLoading(false);
-
     // Service Worker Registration mit Update-Callback
     registerSW((reg) => {
       console.log("👉 Update verfügbar");
       setRegistration(reg);
     });
+
+    // Authentifizierung vom Backend prüfen
+    checkAuth();
   }, []);
 
+  const checkAuth = async () => {
+    try {
+      const res = await fetch("/api/me");
+      setIsAuthenticated(res.ok);
+    } catch (err) {
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLogin = () => {
-    // Prüfen ob App installiert ist
-    const isInstalled = window.matchMedia("(display-mode: standalone)").matches;
-    const storage = isInstalled ? localStorage : sessionStorage;
-    
-    storage.setItem("gerlieva_authenticated", "true");
     setIsAuthenticated(true);
   };
 

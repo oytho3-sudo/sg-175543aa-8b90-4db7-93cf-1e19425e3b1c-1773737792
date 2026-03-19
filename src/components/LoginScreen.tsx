@@ -9,24 +9,38 @@ interface LoginScreenProps {
   onLogin: () => void;
 }
 
-const VALID_USERNAME = "GERLIEVA";
-const VALID_PASSWORD = "1Ger/2226%";
-
 export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (username === VALID_USERNAME && password === VALID_PASSWORD) {
-      // SessionStorage statt localStorage - wird beim Schließen gelöscht
-      sessionStorage.setItem("gerlieva_authenticated", "true");
-      onLogin();
-    } else {
-      setError("Ungültiger Benutzername oder Passwort");
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (res.ok) {
+        onLogin();
+      } else {
+        const data = await res.json();
+        setError(data.error || "Ungültiger Benutzername oder Passwort");
+        setPassword("");
+      }
+    } catch (err) {
+      setError("Verbindungsfehler. Bitte versuchen Sie es erneut.");
       setPassword("");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -52,6 +66,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                   setError("");
                 }}
                 placeholder="GERLIEVA"
+                disabled={isLoading}
                 required
               />
             </div>
@@ -66,6 +81,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                   setError("");
                 }}
                 placeholder="••••••••"
+                disabled={isLoading}
                 required
               />
             </div>
@@ -75,8 +91,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 <span>{error}</span>
               </div>
             )}
-            <Button type="submit" className="w-full">
-              Anmelden
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Anmeldung läuft..." : "Anmelden"}
             </Button>
           </form>
         </CardContent>
