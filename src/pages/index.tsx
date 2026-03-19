@@ -7,7 +7,7 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="GERLIEVA App - Startseite"
+        title="GERLIEVA - Startseite"
         description="Willkommen bei der GERLIEVA App"
       />
       
