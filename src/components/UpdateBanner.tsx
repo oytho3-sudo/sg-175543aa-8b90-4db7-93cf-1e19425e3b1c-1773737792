@@ -4,73 +4,70 @@ import { X, RefreshCw } from "lucide-react";
 
 export function UpdateBanner() {
   const [showBanner, setShowBanner] = useState(false);
-  const [updateReady, setUpdateReady] = useState(false);
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
       return;
     }
 
-    // Check for service worker updates
-    const checkForUpdates = () => {
-      navigator.serviceWorker.getRegistration().then((registration) => {
-        if (registration) {
-          registration.update();
-          
-          // Check if there's a waiting service worker
-          if (registration.waiting) {
-            setUpdateReady(true);
-            setShowBanner(true);
-          }
-        }
-      });
-    };
+    // Service Worker Updates überwachen
+    navigator.serviceWorker.ready.then((reg) => {
+      setRegistration(reg);
 
-    // Listen for service worker updates
-    navigator.serviceWorker.ready.then((registration) => {
-      // Check for updates every 60 seconds
-      const interval = setInterval(checkForUpdates, 60000);
+      // Prüfe auf wartenden Service Worker
+      if (reg.waiting) {
+        setShowBanner(true);
+      }
 
-      // Check immediately
-      checkForUpdates();
-
-      // Listen for waiting service worker
-      registration.addEventListener("updatefound", () => {
-        const newWorker = registration.installing;
+      // Neue Updates erkennen
+      reg.addEventListener("updatefound", () => {
+        const newWorker = reg.installing;
         if (newWorker) {
           newWorker.addEventListener("statechange", () => {
             if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              setUpdateReady(true);
+              // Neues Update verfügbar - Banner anzeigen
               setShowBanner(true);
             }
           });
         }
       });
 
-      // Check when page becomes visible
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          checkForUpdates();
-        }
-      });
+      // Regelmäßig nach Updates suchen (alle 60 Sekunden)
+      const interval = setInterval(() => {
+        reg.update();
+      }, 60000);
 
-      return () => clearInterval(interval);
+      // Bei Sichtbarkeit der Seite nach Updates suchen
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          reg.update();
+        }
+      };
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      };
     });
 
-    // Listen for controller change (new service worker activated)
+    // Reload NUR wenn Benutzer bestätigt hat
+    let refreshing = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      window.location.reload();
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
     });
   }, []);
 
   const handleUpdate = () => {
-    if (!updateReady) return;
+    if (!registration?.waiting) return;
 
-    navigator.serviceWorker.getRegistration().then((registration) => {
-      if (registration?.waiting) {
-        registration.waiting.postMessage({ type: "SKIP_WAITING" });
-      }
-    });
+    // Benutzer hat bestätigt - jetzt Update durchführen
+    registration.waiting.postMessage({ type: "SKIP_WAITING" });
+    setShowBanner(false);
   };
 
   const handleDismiss = () => {
@@ -86,7 +83,7 @@ export function UpdateBanner() {
           <div className="flex items-center gap-3">
             <RefreshCw className="h-5 w-5" />
             <p className="text-sm font-medium">
-              Ein neues Update ist verfügbar! Aktualisiere die App, um die neueste Version zu nutzen.
+              Ein neues Update ist verfügbar! Möchtest du jetzt aktualisieren?
             </p>
           </div>
           <div className="flex items-center gap-2">

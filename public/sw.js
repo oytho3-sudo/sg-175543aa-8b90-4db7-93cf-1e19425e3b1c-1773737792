@@ -5,12 +5,12 @@ const urlsToCache = [
   '/favicon.ico'
 ];
 
-// Install event
+// Install event - NICHT automatisch aktivieren
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
-      .then(() => self.skipWaiting())
+      // WICHTIG: skipWaiting() entfernt, damit nicht automatisch aktiviert wird
   );
 });
 
@@ -48,7 +48,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Message event for update checks
+// Message event - NUR bei Benutzerbestätigung aktivieren
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
