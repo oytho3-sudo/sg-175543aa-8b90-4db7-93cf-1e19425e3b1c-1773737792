@@ -2,10 +2,9 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
-import { UpdateToast } from "@/components/UpdateToast";
-import { LoginScreen } from "@/components/LoginScreen";
 import { useEffect, useState } from "react";
-import { registerSW } from "@/lib/swUpdate";
+import { LoginScreen } from "@/components/LoginScreen";
+import { UpdateToast } from "@/components/UpdateToast";
 
 export default function App({ Component, pageProps }: AppProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -13,45 +12,59 @@ export default function App({ Component, pageProps }: AppProps) {
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    // Service Worker Registration mit Update-Callback
-    registerSW((reg) => {
-      console.log("👉 Update verfügbar");
-      setRegistration(reg);
-    });
+    // Auth-Status vom Backend prüfen
+    fetch("/api/me")
+      .then((res) => {
+        if (res.ok) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      })
+      .catch(() => {
+        setIsAuthenticated(false);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
 
-    // Authentifizierung vom Backend prüfen
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const res = await fetch("/api/me");
-      setIsAuthenticated(res.ok);
-    } catch (err) {
-      setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false);
+    // Service Worker registrieren
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((reg) => {
+          setRegistration(reg);
+        })
+        .catch((err) => console.error("SW registration failed:", err));
     }
-  };
+  }, []);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
   };
 
   if (isLoading) {
-    return null;
+    return (
+      <ThemeProvider>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-lg">Lade...</div>
+        </div>
+      </ThemeProvider>
+    );
   }
 
   if (!isAuthenticated) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return (
+      <ThemeProvider>
+        <LoginScreen onLogin={handleLogin} />
+      </ThemeProvider>
+    );
   }
 
   return (
     <ThemeProvider>
       <Component {...pageProps} />
       <Toaster />
-      
-      {/* 🔔 Update Toast */}
       <UpdateToast registration={registration} />
     </ThemeProvider>
   );

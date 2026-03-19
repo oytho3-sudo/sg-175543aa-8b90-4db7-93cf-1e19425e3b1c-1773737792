@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -13,12 +11,12 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
+    setLoading(true);
 
     try {
       const res = await fetch("/api/login", {
@@ -32,67 +30,63 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       if (res.ok) {
         onLogin();
       } else {
-        const data = await res.json();
-        setError(data.error || "Ungültiger Benutzername oder Passwort");
+        setError("Ungültiger Benutzername oder Passwort");
         setPassword("");
       }
     } catch (err) {
-      setError("Verbindungsfehler. Bitte versuchen Sie es erneut.");
-      setPassword("");
+      setError("Verbindungsfehler. Bitte versuche es erneut.");
+      console.error("Login error:", err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Gerlieva Service</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
           <CardDescription className="text-center">
-            Bitte melden Sie sich an, um fortzufahren
+            Melde dich mit deinen Zugangsdaten an
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Benutzername</Label>
+              <label htmlFor="username" className="text-sm font-medium">
+                Benutzername
+              </label>
               <Input
                 id="username"
                 type="text"
                 value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  setError("");
-                }}
-                placeholder="GERLIEVA"
-                disabled={isLoading}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Benutzername eingeben"
                 required
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Passwort</Label>
+              <label htmlFor="password" className="text-sm font-medium">
+                Passwort
+              </label>
               <Input
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError("");
-                }}
-                placeholder="••••••••"
-                disabled={isLoading}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Passwort eingeben"
                 required
+                disabled={loading}
               />
             </div>
             {error && (
-              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                <AlertCircle className="h-4 w-4" />
-                <span>{error}</span>
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">
+                {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Anmeldung läuft..." : "Anmelden"}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Anmeldung läuft..." : "Anmelden"}
             </Button>
           </form>
         </CardContent>
