@@ -21,7 +21,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     e.preventDefault();
     
     if (username === VALID_USERNAME && password === VALID_PASSWORD) {
-      localStorage.setItem("gerlieva_authenticated", "true");
+      // SessionStorage statt localStorage - wird beim Schließen gelöscht
+      sessionStorage.setItem("gerlieva_authenticated", "true");
       onLogin();
     } else {
       setError("Ungültiger Benutzername oder Passwort");
