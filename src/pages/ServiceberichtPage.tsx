@@ -25,14 +25,14 @@ const translations = {
     toastLoadError: 'Fehler beim Laden: ',
     docTitle:       'Servicebericht',
     sectionKunde:   'Kunde',
-    sectionMaschine:'Maschine',
+    sectionMaschine:'Anlage',
     sectionArbeiten:'Durchgeführte Arbeiten',
     sectionReise:   'Arbeits- und Reisezeiten',
+    sectionBemerkung: 'Beschreibung / Bemerkung',
     sectionMaterial:'Material- und Teileliste',
-    sectionBemerk:  'Bemerkungen / Fehlerbeschreibung',
     sectionSign:    'BESTÄTIGUNG / UNTERSCHRIFTEN',
     labelName:      'Name:',
-    labelStrasse:   'Straße:',
+    labelStrasse:   'Anschrift:',
     labelTelefon:   'Telefon:',
     labelReferenz:  'Referenz:',
     labelAnsprechpartner: 'Ansprechpartner:',
@@ -93,14 +93,14 @@ const translations = {
     toastLoadError: 'Error loading file: ',
     docTitle:       'Service Report',
     sectionKunde:   'Customer',
-    sectionMaschine:'Machine',
+    sectionMaschine:'Plant',
     sectionArbeiten:'Work Performed',
     sectionReise:   'Working & Travel Times',
+    sectionBemerkung: 'Description / Remarks',
     sectionMaterial:'Materials & Parts List',
-    sectionBemerk:  'Remarks / Fault Description',
     sectionSign:    'CONFIRMATION / SIGNATURES',
     labelName:      'Name:',
-    labelStrasse:   'Street:',
+    labelStrasse:   'Address:',
     labelTelefon:   'Phone:',
     labelReferenz:  'Reference:',
     labelAnsprechpartner: 'Contact Person:',
@@ -161,14 +161,14 @@ const translations = {
     toastLoadError: 'Erreur de chargement : ',
     docTitle:       'Rapport de service',
     sectionKunde:   'Client',
-    sectionMaschine:'Machine',
+    sectionMaschine:'Installation',
     sectionArbeiten:'Travaux effectués',
     sectionReise:   'Temps de travail et de déplacement',
+    sectionBemerkung: 'Description / Remarques',
     sectionMaterial:'Liste des matériaux et pièces',
-    sectionBemerk:  'Remarques / Description de la panne',
     sectionSign:    'CONFIRMATION / SIGNATURES',
     labelName:      'Nom :',
-    labelStrasse:   'Rue :',
+    labelStrasse:   'Adresse :',
     labelTelefon:   'Téléphone :',
     labelReferenz:  'Référence :',
     labelAnsprechpartner: 'Personne de contact :',
@@ -246,8 +246,8 @@ interface FormData {
   reiseChecks: Record<string, boolean>;
   zeiten: ZeitRow[];
   material: MaterialRow[];
-  bemerkungen: string;
   nameGerlieva: string; nameKunde: string; signatureDate: string;
+  bemerkung: string;
   signatures: { 'sig-gerlieva'?: string; 'sig-kunde'?: string };
 }
 
@@ -264,14 +264,14 @@ const initialForm = (): FormData => ({
   kundeName: '', kundeStrasse: '', kundeTelefon: '', kundeReferenz: '',
   ansprechpartner: '',
   servicetechniker: '',
-  maschinen: Array.from({ length: 4 }, emptyMaschine),
+  maschinen: Array.from({ length: 6 }, emptyMaschine),
   arbeitenChecks: { Montage: false, Inbetriebnahme: false, Softwareupdate: false, Wartung: false, Reparatur: false },
   arbeitenSonstiges: '',
   reiseChecks: { PKW: false, Flugzeug: false, Zug: false, Hotel: false, Sonstiges: false },
   zeiten: Array.from({ length: 7 }, emptyZeit),
   material: Array.from({ length: 15 }, emptyMaterial),
-  bemerkungen: '',
   nameGerlieva: '', nameKunde: '', signatureDate: '',
+  bemerkung: '',
   signatures: {},
 });
 
@@ -285,21 +285,64 @@ const REISE_TK: Record<string, TKeys>    = { PKW: 'reisePkw', Flugzeug: 'reiseFl
 // Language Switcher
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const FLAG: Record<Lang, string> = { de: '🇩🇪', en: '🇬🇧', fr: '🇫🇷' };
+function FlagDE() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="30" height="20" style={{ display: 'block', borderRadius: 2 }}>
+      <rect width="30" height="20" fill="#000"/>
+      <rect y="6.67" width="30" height="6.67" fill="#D00"/>
+      <rect y="13.33" width="30" height="6.67" fill="#FFCE00"/>
+    </svg>
+  );
+}
+
+function FlagEN() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="30" height="20" style={{ display: 'block', borderRadius: 2 }}>
+      <rect width="30" height="20" fill="#012169"/>
+      {/* White diagonals */}
+      <line x1="0" y1="0" x2="30" y2="20" stroke="#fff" strokeWidth="4"/>
+      <line x1="30" y1="0" x2="0" y2="20" stroke="#fff" strokeWidth="4"/>
+      {/* Red diagonals */}
+      <line x1="0" y1="0" x2="30" y2="20" stroke="#C8102E" strokeWidth="2.4"/>
+      <line x1="30" y1="0" x2="0" y2="20" stroke="#C8102E" strokeWidth="2.4"/>
+      {/* White cross */}
+      <rect x="12" y="0" width="6" height="20" fill="#fff"/>
+      <rect y="7" width="30" height="6" fill="#fff"/>
+      {/* Red cross */}
+      <rect x="13" y="0" width="4" height="20" fill="#C8102E"/>
+      <rect y="8" width="30" height="4" fill="#C8102E"/>
+    </svg>
+  );
+}
+
+function FlagFR() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" width="30" height="20" style={{ display: 'block', borderRadius: 2 }}>
+      <rect width="30" height="20" fill="#ED2939"/>
+      <rect width="20" height="20" fill="#fff"/>
+      <rect width="10" height="20" fill="#002395"/>
+    </svg>
+  );
+}
+
+const FLAG_COMPONENTS: Record<Lang, () => JSX.Element> = { de: FlagDE, en: FlagEN, fr: FlagFR };
 
 function LangSwitcher({ current, onChange }: { current: Lang; onChange: (l: Lang) => void }) {
   return (
     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-      {(['de', 'en', 'fr'] as Lang[]).map(l => (
-        <button key={l} onClick={() => onChange(l)} title={l.toUpperCase()} style={{
-          border: current === l ? '2px solid #fff' : '2px solid transparent',
-          background: current === l ? 'rgba(255,255,255,0.18)' : 'transparent',
-          borderRadius: 4, cursor: 'pointer', padding: '2px 7px', fontSize: 17, lineHeight: 1,
-          transition: 'all 0.15s',
-        }}>
-          {FLAG[l]}
-        </button>
-      ))}
+      {(['de', 'en', 'fr'] as Lang[]).map(l => {
+        const FlagComp = FLAG_COMPONENTS[l];
+        return (
+          <button key={l} onClick={() => onChange(l)} title={l.toUpperCase()} style={{
+            border: current === l ? '2px solid #fff' : '2px solid transparent',
+            background: current === l ? 'rgba(255,255,255,0.18)' : 'transparent',
+            borderRadius: 4, cursor: 'pointer', padding: '2px 4px', lineHeight: 1,
+            transition: 'all 0.15s', display: 'flex', alignItems: 'center',
+          }}>
+            <FlagComp />
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -389,11 +432,19 @@ function SigPreview({ dataUrl, onClick, tapLabel }: { dataUrl?: string; onClick:
     if (dataUrl) {
       const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, w, h); img.src = dataUrl;
     } else {
-      ctx.fillStyle = '#bbb'; ctx.font = '11px Arial'; ctx.textAlign = 'center';
+      const fontSize = Math.max(11, Math.round(w * 0.045));
+      ctx.fillStyle = '#bbb'; ctx.font = `${fontSize}px Arial`; ctx.textAlign = 'center';
       ctx.fillText(tapLabel, w / 2, h / 2);
     }
   }, [dataUrl, tapLabel]);
-  useEffect(() => { setTimeout(redraw, 50); window.addEventListener('resize', redraw); return () => window.removeEventListener('resize', redraw); }, [redraw]);
+  useEffect(() => {
+    setTimeout(redraw, 50);
+    // ResizeObserver reagiert auf Zoom UND Fenstergröße
+    const ro = new ResizeObserver(() => redraw());
+    if (canvasRef.current) ro.observe(canvasRef.current);
+    window.addEventListener('resize', redraw);
+    return () => { ro.disconnect(); window.removeEventListener('resize', redraw); };
+  }, [redraw]);
   return (
     <div style={{ position: 'relative', width: '100%', aspectRatio: '4/1' }}>
       {/* Bildschirm: Canvas (wird beim Druck ausgeblendet) */}
@@ -439,6 +490,29 @@ export default function ServiceberichtPage() {
   const [sigModal, setSigModal] = useState<{ id: 'sig-gerlieva' | 'sig-kunde'; label: string } | null>(null);
   const [toast, setToast]     = useState<{ msg: string; type: 'success' | 'error' | ''; visible: boolean }>({ msg: '', type: '', visible: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── localStorage Persistierung ──
+  const STORAGE_KEY = 'servicebericht_form_data';
+
+  // Beim Mount: Daten laden
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data && data.version === 1) {
+          setForm(data);
+        }
+      } catch (err) {
+        console.error('Fehler beim Laden:', err);
+      }
+    }
+  }, []);
+
+  // Bei jeder Änderung: Daten speichern
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
+  }, [form]);
 
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type, visible: true });
@@ -539,8 +613,8 @@ export default function ServiceberichtPage() {
       </div>
 
       {/* ── Page body ── */}
-      <div style={s.body}>
-        <div style={s.container}>
+      <div style={s.body} className="print-body">
+        <div style={s.container} className="print-container">
 
           {/* Header */}
           <div style={s.header}>
@@ -614,7 +688,7 @@ export default function ServiceberichtPage() {
           </div>
 
           {/* ── Reisezeiten ── */}
-          <div style={s.section}>
+          <div style={{ ...s.section, pageBreakInside: 'avoid', breakInside: 'avoid' }}>
             <h2 style={s.sectionTitle}>{t.sectionReise}</h2>
             <div style={s.checkboxList}>
               {REISE_KEYS.map(k => (
@@ -625,7 +699,7 @@ export default function ServiceberichtPage() {
               ))}
             </div>
             <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              <table style={{ ...s.table, marginTop: 10 }}>
+              <table style={{ ...s.table, marginTop: 10, pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                 <colgroup>
                   <col style={{ width: 30 }} /><col style={{ width: 90 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} />
                   <col style={{ width: 50 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} />
@@ -667,8 +741,31 @@ export default function ServiceberichtPage() {
             </div>
           </div>
 
+          {/* ── Beschreibung / Bemerkung ── */}
+          <div style={s.section}>
+            <h2 style={s.sectionTitle}>{t.sectionBemerkung}</h2>
+            <textarea
+              value={form.bemerkung}
+              onChange={e => setField('bemerkung', e.target.value)}
+              rows={10}
+              style={{
+                width: '100%',
+                resize: 'vertical',
+                border: '1px solid #ddd',
+                borderRadius: 4,
+                padding: 6,
+                fontSize: 11,
+                fontFamily: 'Arial, sans-serif',
+                lineHeight: 1.6,
+                boxSizing: 'border-box',
+                background: 'white',
+                color: '#000',
+              }}
+            />
+          </div>
+
           {/* ── Material ── */}
-          <div style={{ pageBreakBefore: 'always' }}>
+          <div className="page-break-before" style={{ pageBreakBefore: 'always', breakBefore: 'page' }}>
             <div style={s.section}>
               <h2 style={s.sectionTitle}>{t.sectionMaterial}</h2>
               <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
@@ -695,13 +792,6 @@ export default function ServiceberichtPage() {
             </div>
           </div>
 
-          {/* ── Bemerkungen ── */}
-          <div style={s.section}>
-            <h2 style={s.sectionTitle}>{t.sectionBemerk}</h2>
-            <textarea value={form.bemerkungen} onChange={e => setField('bemerkungen', e.target.value)}
-              style={{ width: '100%', height: 80, border: '1px solid #ddd', padding: 6, borderRadius: 4, fontSize: 11, fontFamily: 'Arial, sans-serif', resize: 'vertical', boxSizing: 'border-box' }} />
-          </div>
-
           {/* ── Unterschriften ── */}
           <div style={{ ...s.section, marginTop: 20 }}>
             <h2 style={{ fontSize: 14, background: '#f0f0f0', padding: 8, borderRadius: 4, borderBottom: '3px solid #000', marginBottom: 15 }}>
@@ -714,14 +804,14 @@ export default function ServiceberichtPage() {
                 const nameKey     = isGerlieva ? 'nameGerlieva' : 'nameKunde';
                 const placeholder = isGerlieva ? t.sigPlaceholderTech : t.sigPlaceholderKunde;
                 return (
-                  <div key={id} style={{ flex: '1 1 240px', minWidth: 0, border: '1px solid #ccc', borderRadius: 4, padding: 8, background: '#fafafa' }}>
-                    <div style={{ fontSize: 11, fontWeight: 'bold', marginBottom: 4 }}>{label}</div>
+                  <div key={id} style={{ flex: '1 1 240px', minWidth: 0, border: '1px solid #ccc', borderRadius: 4, padding: '0.5em', background: '#fafafa' }}>
+                    <div style={{ fontSize: '0.85em', fontWeight: 'bold', marginBottom: '0.3em' }}>{label}</div>
                     <SigPreview dataUrl={form.signatures[id]} onClick={() => setSigModal({ id, label })} tapLabel={t.sigTap} />
-                    <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ marginTop: '0.4em', display: 'flex', alignItems: 'center', gap: '0.4em' }}>
                       <input type="text" placeholder={placeholder} value={form[nameKey]} onChange={e => setField(nameKey, e.target.value)}
-                        style={{ flex: 1, border: 'none', borderBottom: '1px solid #aaa', outline: 'none', fontSize: 11, background: 'white', color: '#000' }} />
+                        style={{ flex: 1, border: 'none', borderBottom: '1px solid #aaa', outline: 'none', fontSize: '0.85em', background: 'white', color: '#000' }} />
                       <button onClick={() => clearSig(id)}
-                        style={{ fontSize: 9, padding: '2px 6px', background: '#eee', border: '1px solid #bbb', borderRadius: 3, cursor: 'pointer' }}>
+                        style={{ fontSize: '0.75em', padding: '0.2em 0.5em', background: '#eee', border: '1px solid #bbb', borderRadius: 3, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                         {t.sigDelete}
                       </button>
                     </div>
@@ -729,10 +819,10 @@ export default function ServiceberichtPage() {
                 );
               })}
             </div>
-            <div style={{ textAlign: 'center', marginTop: 15, fontWeight: 'bold', fontSize: 12 }}>
+            <div style={{ textAlign: 'center', marginTop: 15, fontWeight: 'bold', fontSize: '0.9em' }}>
               {t.labelDatum}{' '}
               <input type="date" value={form.signatureDate} onChange={e => setField('signatureDate', e.target.value)}
-                style={{ border: '1px solid #ccc', padding: '4px 8px', borderRadius: 4, fontSize: 11 }} />
+                style={{ border: '1px solid #ccc', padding: '0.3em 0.6em', borderRadius: 4, fontSize: '0.85em' }} />
             </div>
           </div>
 
@@ -792,10 +882,46 @@ const printStyles = `
   }
   @media print {
     .no-print { display: none !important; }
-    body { padding: 10px; font-size: 10.5px; background: white; }
-    .section { page-break-inside: avoid; }
+
+    /* Kompaktes 2-Seiten-Layout */
+    @page { margin: 8mm 10mm; }
+    body { padding: 0 !important; font-size: 9px !important; background: white; }
+
+    .print-body { padding: 0 !important; background: white !important; }
+    .print-container { box-shadow: none !important; padding: 8px !important; margin-top: 0 !important; border-radius: 0 !important; }
+
+    /* Sektionen kompakter */
+    h1 { font-size: 13px !important; margin: 0 0 2px !important; }
+    h2 { font-size: 10px !important; margin: 0 0 4px !important; padding: 4px 6px !important; }
+    p  { font-size: 8px !important; margin: 0 !important; }
+
+    /* Abstände reduzieren */
+    section, div[style*="marginBottom: 15"] { margin-bottom: 6px !important; }
+    div[style*="border: 1px solid #ccc"]    { padding: 6px !important; margin-bottom: 6px !important; }
+
+    /* Tabellen-Zellen kompakter */
+    th, td { padding: 2px 3px !important; font-size: 8.5px !important; }
+
+    /* Inputs im Druck: kein Rand, kompakt */
+    input[type="text"], input[type="date"], input[type="time"], input[type="number"] {
+      padding: 1px 2px !important;
+      font-size: 8.5px !important;
+    }
+
+    /* Checkboxen + Labels */
+    label { font-size: 8.5px !important; }
+
+    /* Textarea im Druck */
+    textarea { resize: none !important; font-size: 8.5px !important; padding: 4px !important; border: 1px solid #000 !important; }
+
+    /* Seitenumbrüche */
+    .page-break-before { page-break-before: always !important; break-before: page !important; }
+    tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+    thead { display: table-header-group; }
+
+    /* Unterschriften kompakter */
     .sig-canvas        { display: none !important; }
-    .sig-print-img     { display: block !important; width: 100% !important; height: auto !important; max-height: 80px; object-fit: contain; border: 1px solid #000; }
-    .sig-print-empty   { display: block !important; width: 100% !important; height: 60px !important; border: 1px solid #000; background: white; }
+    .sig-print-img     { display: block !important; width: 100% !important; height: auto !important; max-height: 60px; object-fit: contain; border: 1px solid #000; }
+    .sig-print-empty   { display: block !important; width: 100% !important; height: 50px !important; border: 1px solid #000; background: white; }
   }
 `;
