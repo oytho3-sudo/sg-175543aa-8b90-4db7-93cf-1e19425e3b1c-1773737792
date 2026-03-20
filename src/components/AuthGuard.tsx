@@ -56,13 +56,15 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
         .from("profiles")
         .select("role")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
-      setUserRole(data?.role || "viewer");
+      // Falls kein Profil gefunden wurde, setze default role
+      const role = data?.role || "viewer";
+      setUserRole(role);
 
-      if (allowedRoles && !allowedRoles.includes(data?.role || "viewer")) {
+      if (allowedRoles && !allowedRoles.includes(role)) {
         router.push("/");
       }
     } catch (error) {
