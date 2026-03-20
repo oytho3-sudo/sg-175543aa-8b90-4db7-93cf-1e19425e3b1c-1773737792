@@ -851,14 +851,16 @@ function PruefZeile({ zeile, state, onChange, rowIndex, t }: {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const printStyles = `
-  /* ── Globaler Reset: kein Overflow-Block beim Drehen ── */
-  html, body {
+  /* ── Globaler Reset ── */
+  html {
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  body {
     overflow-x: hidden;
     overflow-y: auto;
-    overscroll-behavior-y: none;
+    overscroll-behavior-y: auto;
     -webkit-overflow-scrolling: touch;
-    height: auto !important;
-    min-height: 100%;
   }
 
   @page { size: A4 portrait; margin: 10mm 11mm; }
@@ -1022,48 +1024,23 @@ export default function WartungsprotokollPage() {
 
   const handleShare = async () => {
     const jsonStr = JSON.stringify(collectFormData(), null, 2);
-    const baseName = getFileNameFn('json');
-    // Versuche zuerst als .json zu teilen, Fallback auf .txt (breiter unterstützt)
-    const tryShare = async (mimeType: string, ext: string) => {
-      const blob = new Blob([jsonStr], { type: mimeType });
-      const fileName = baseName.replace(/\.json$/, '.' + ext);
-      const file = new File([blob], fileName, { type: mimeType });
-      if (typeof navigator.share === 'function') {
-        try {
-          if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
-            await navigator.share({ title: t.labelWartungShare, files: [file] });
-            return true;
-          }
-        } catch (e) {
-          if ((e as Error).name === 'AbortError') return true;
-        }
-      }
-      return false;
-    };
+    const fileName = getFileNameFn('json').replace(/\.json$/, '.txt');
+    const blob = new Blob([jsonStr], { type: 'text/plain' });
+    const file = new File([blob], fileName, { type: 'text/plain' });
     try {
-      // 1. Versuch: .json
-      if (await tryShare('application/json', 'json')) return;
-      // 2. Versuch: .txt (iOS Safari akzeptiert text/plain zuverlässig)
-      if (await tryShare('text/plain', 'txt')) return;
-      // 3. Versuch: nur Text ohne Datei
-      if (typeof navigator.share === 'function') {
-        try {
-          await navigator.share({ title: t.labelWartungShare, text: jsonStr });
-          return;
-        } catch (e) {
-          if ((e as Error).name === 'AbortError') return;
-        }
+      if (typeof navigator.share === 'function' && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+        await navigator.share({ title: t.labelWartungShare, files: [file] });
+        return;
       }
-      // Fallback: Download
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = baseName;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-      showToast(t.toastDownloaded, 'success');
-    } catch (err: unknown) {
-      if ((err as Error).name !== 'AbortError') showToast(t.toastError + (err as Error).message, 'error');
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return;
     }
+    // Fallback: Download als .json
+    const url = URL.createObjectURL(new Blob([jsonStr], { type: 'application/json' }));
+    const a = document.createElement('a'); a.href = url; a.download = getFileNameFn('json');
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    showToast(t.toastDownloaded, 'success');
   };
 
   const handlePdf = () => {
@@ -1222,7 +1199,7 @@ export default function WartungsprotokollPage() {
           <LangSwitcher current={lang} onChange={setLang} />
           <a href="/" style={{ ...tbtn('#1a5fa8'), textDecoration: 'none' }}>{t.home}</a>
         </div>
-        <input ref={fileInputRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleLoad} />
+        <input ref={fileInputRef} type="file" accept=".json,.txt" style={{ display: 'none' }} onChange={handleLoad} />
       </div>
 
       {/* ── Seiten ── */}
