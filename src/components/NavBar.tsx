@@ -4,7 +4,7 @@ import Link from "next/link";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
-import { LogOut, Shield, User } from "lucide-react";
+import { LogOut, Shield, User as UserIcon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 export function NavBar() {
@@ -79,7 +79,7 @@ export function NavBar() {
 
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2 text-sm">
-              <User className="h-4 w-4" />
+              <UserIcon className="h-4 w-4" />
               <span className="text-muted-foreground">{userName || user.email}</span>
             </div>
 
