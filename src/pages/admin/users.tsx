@@ -31,7 +31,7 @@ export default function UsersPage() {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserName, setNewUserName] = useState("");
-  const [newUserRole, setNewUserRole] = useState("viewer");
+  const [newUserRole, setNewUserRole] = useState("Techniker");
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function UsersPage() {
       setNewUserEmail("");
       setNewUserPassword("");
       setNewUserName("");
-      setNewUserRole("viewer");
+      setNewUserRole("Techniker");
       await fetchProfiles();
     } catch (err: any) {
       setError(err.message || "Fehler beim Erstellen des Benutzers");
@@ -136,20 +136,13 @@ export default function UsersPage() {
 
   const getRoleBadge = (role: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive"> = {
-      admin: "destructive",
-      technician: "default",
-      viewer: "secondary",
-    };
-
-    const labels: Record<string, string> = {
-      admin: "Administrator",
-      technician: "Techniker",
-      viewer: "Betrachter",
+      Admin: "destructive",
+      Techniker: "default",
     };
 
     return (
       <Badge variant={variants[role] || "secondary"}>
-        {labels[role] || role}
+        {role}
       </Badge>
     );
   };
@@ -239,9 +232,8 @@ export default function UsersPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="admin">Administrator</SelectItem>
-                        <SelectItem value="technician">Techniker</SelectItem>
-                        <SelectItem value="viewer">Betrachter</SelectItem>
+                        <SelectItem value="Admin">Administrator</SelectItem>
+                        <SelectItem value="Techniker">Techniker</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -292,9 +284,8 @@ export default function UsersPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="admin">Administrator</SelectItem>
-                              <SelectItem value="technician">Techniker</SelectItem>
-                              <SelectItem value="viewer">Betrachter</SelectItem>
+                              <SelectItem value="Admin">Administrator</SelectItem>
+                              <SelectItem value="Techniker">Techniker</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>

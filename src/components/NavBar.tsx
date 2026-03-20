@@ -4,7 +4,7 @@ import Link from "next/link";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
-import { LogOut, Shield, User as UserIcon } from "lucide-react";
+import { LogOut, Shield, User as UserIcon, Users } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 export function NavBar() {
@@ -86,26 +86,25 @@ export function NavBar() {
               <span className="text-muted-foreground">{userName || user.email}</span>
             </div>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/profil")}
-              className="hidden sm:flex"
-            >
-              <UserIcon className="h-4 w-4 mr-2" />
-              Profil
-            </Button>
-
-            {userRole === "admin" && (
-              <Button
+            {userRole === "Admin" && (
+              <Button 
+                onClick={() => router.push("/admin/users")} 
                 variant="outline"
-                size="sm"
-                onClick={() => router.push("/admin/users")}
+                className="flex items-center gap-2"
               >
-                <Shield className="h-4 w-4 mr-2" />
-                Benutzer
+                <Users className="h-4 w-4" />
+                Benutzerverwaltung
               </Button>
             )}
+
+            <Button 
+              onClick={() => router.push("/profil")} 
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <UserIcon className="h-4 w-4" />
+              Profil
+            </Button>
 
             <ThemeSwitch />
 
