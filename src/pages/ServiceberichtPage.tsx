@@ -27,7 +27,6 @@ const translations = {
     sectionKunde:   'Kunde',
     sectionMaschine:'Anlage',
     sectionArbeiten:'Durchgeführte Arbeiten',
-    sectionReise:   'Arbeits- und Reisezeiten',
     sectionBemerkung: 'Beschreibung / Bemerkung',
     sectionMaterial:'Material- und Teileliste',
     sectionSign:    'BESTÄTIGUNG / UNTERSCHRIFTEN',
@@ -47,20 +46,6 @@ const translations = {
     arbSoftware:    'Softwareupdate',
     arbWartung:     'Wartung',
     arbReparatur:   'Reparatur',
-    reisePkw:       'PKW',
-    reiseFlugzeug:  'Flugzeug',
-    reiseZug:       'Zug',
-    reiseHotel:     'Hotel',
-    reiseSonstiges: 'Sonstiges',
-    thTag:          'Tag',
-    thDatum:        'Datum',
-    thAnreise:      'Anreise',
-    thArbeitszeit:  'Arbeitszeit',
-    thRueckreise:   'Rückreise',
-    thKm:           'km',
-    thPause:        'Pause (Min)',
-    thVon:          'von',
-    thBis:          'bis',
     thPos:          'Pos.',
     thBeschreibung: 'Beschreibung',
     thTeilenummer:  'Teilenummer',
@@ -76,6 +61,21 @@ const translations = {
     sigOk:          '✓ Bestätigen',
     sigTap:         'Tippen zum Unterschreiben',
     labelDatum:     'Datum:',
+    labelGesamtAZ:  'gesamte Arbeitszeit:',
+    thDatum:        'Datum',
+    thAzVon:        'Arbeitszeit von',
+    thAzBis:        'bis',
+    thPause:        'Pause (Min)',
+    btnTagHinzu:    '+ Tag',
+    btnTagEntf2:    '− Tag',
+    labelMonteur:   'Monteur',
+    thTagTyp:       'Tagestyp',
+    tagTypNormal:   '—',
+    tagTypFeiertag: 'Feiertag',
+    tagTypSamstag:  'Samstag',
+    tagTypSonntag:  'Sonntag',
+    tagTypNacht:    'Nachtstunden',
+    sectionZeiten:  'Arbeitszeiten',
   },
   en: {
     loadJson:       '📂 Load JSON',
@@ -95,7 +95,6 @@ const translations = {
     sectionKunde:   'Customer',
     sectionMaschine:'Plant',
     sectionArbeiten:'Work Performed',
-    sectionReise:   'Working & Travel Times',
     sectionBemerkung: 'Description / Remarks',
     sectionMaterial:'Materials & Parts List',
     sectionSign:    'CONFIRMATION / SIGNATURES',
@@ -115,20 +114,6 @@ const translations = {
     arbSoftware:    'Software Update',
     arbWartung:     'Maintenance',
     arbReparatur:   'Repair',
-    reisePkw:       'Car',
-    reiseFlugzeug:  'Plane',
-    reiseZug:       'Train',
-    reiseHotel:     'Hotel',
-    reiseSonstiges: 'Other',
-    thTag:          'Day',
-    thDatum:        'Date',
-    thAnreise:      'Outbound',
-    thArbeitszeit:  'Working Time',
-    thRueckreise:   'Return',
-    thKm:           'km',
-    thPause:        'Break (min)',
-    thVon:          'from',
-    thBis:          'to',
     thPos:          'Pos.',
     thBeschreibung: 'Description',
     thTeilenummer:  'Part Number',
@@ -144,6 +129,21 @@ const translations = {
     sigOk:          '✓ Confirm',
     sigTap:         'Tap to sign',
     labelDatum:     'Date:',
+    labelGesamtAZ:  'total working time:',
+    thDatum:        'Date',
+    thAzVon:        'Working time from',
+    thAzBis:        'to',
+    thPause:        'Break (min)',
+    btnTagHinzu:    '+ Day',
+    btnTagEntf2:    '− Day',
+    labelMonteur:   'Technician',
+    thTagTyp:       'Day type',
+    tagTypNormal:   '—',
+    tagTypFeiertag: 'Holiday',
+    tagTypSamstag:  'Saturday',
+    tagTypSonntag:  'Sunday',
+    tagTypNacht:    'Night hours',
+    sectionZeiten:  'Working Times',
   },
   fr: {
     loadJson:       '📂 Charger JSON',
@@ -163,7 +163,6 @@ const translations = {
     sectionKunde:   'Client',
     sectionMaschine:'Installation',
     sectionArbeiten:'Travaux effectués',
-    sectionReise:   'Temps de travail et de déplacement',
     sectionBemerkung: 'Description / Remarques',
     sectionMaterial:'Liste des matériaux et pièces',
     sectionSign:    'CONFIRMATION / SIGNATURES',
@@ -183,20 +182,6 @@ const translations = {
     arbSoftware:    'Mise à jour logiciel',
     arbWartung:     'Maintenance',
     arbReparatur:   'Réparation',
-    reisePkw:       'Voiture',
-    reiseFlugzeug:  'Avion',
-    reiseZug:       'Train',
-    reiseHotel:     'Hôtel',
-    reiseSonstiges: 'Autre',
-    thTag:          'Jour',
-    thDatum:        'Date',
-    thAnreise:      'Aller',
-    thArbeitszeit:  'Temps de travail',
-    thRueckreise:   'Retour',
-    thKm:           'km',
-    thPause:        'Pause (min)',
-    thVon:          'de',
-    thBis:          'à',
     thPos:          'Pos.',
     thBeschreibung: 'Description',
     thTeilenummer:  'N° de pièce',
@@ -212,6 +197,21 @@ const translations = {
     sigOk:          '✓ Confirmer',
     sigTap:         'Appuyer pour signer',
     labelDatum:     'Date :',
+    labelGesamtAZ:  'temps de travail total :',
+    thDatum:        'Date',
+    thAzVon:        'Temps de travail de',
+    thAzBis:        'à',
+    thPause:        'Pause (min)',
+    btnTagHinzu:    '+ Jour',
+    btnTagEntf2:    '− Jour',
+    labelMonteur:   'Technicien',
+    thTagTyp:       'Type de jour',
+    tagTypNormal:   '—',
+    tagTypFeiertag: 'Jour férié',
+    tagTypSamstag:  'Samedi',
+    tagTypSonntag:  'Dimanche',
+    tagTypNacht:    'Heures de nuit',
+    sectionZeiten:  'Temps de travail',
   },
 } satisfies Record<Lang, Record<string, string>>;
 
@@ -225,12 +225,16 @@ type T = Record<TKeys, string>;
 interface MaschineRow {
   nr: string; typ: string; maschinenNr: string; kundenNr: string; komNr: string;
 }
-interface ZeitRow {
-  datum: string;
-  anreiseVon: string; anreiseBis: string; anreiseKm: string;
-  arbeitVon: string; arbeitBis: string;
-  rueckreiseVon: string; rueckreiseBis: string; rueckreiseKm: string;
+interface MontagTag {
+  datum:    string;
+  vonZeit:  string;
+  bisZeit:  string;
   pauseMin: string;
+  tagTyp:   '' | 'feiertag' | 'samstag' | 'sonntag';
+}
+interface Monteur {
+  name: string;
+  tage: MontagTag[];
 }
 interface MaterialRow {
   pos: string; beschreibung: string; teilenummer: string; stk: string;
@@ -243,8 +247,7 @@ interface FormData {
   maschinen: MaschineRow[];
   arbeitenChecks: Record<string, boolean>;
   arbeitenSonstiges: string;
-  reiseChecks: Record<string, boolean>;
-  zeiten: ZeitRow[];
+  monteure: Monteur[];
   material: MaterialRow[];
   nameGerlieva: string; nameKunde: string; signatureDate: string;
   bemerkung: string;
@@ -256,7 +259,8 @@ interface FormData {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const emptyMaschine  = (): MaschineRow  => ({ nr: '', typ: '', maschinenNr: '', kundenNr: '', komNr: '' });
-const emptyZeit      = (): ZeitRow      => ({ datum: '', anreiseVon: '', anreiseBis: '', anreiseKm: '', arbeitVon: '', arbeitBis: '', rueckreiseVon: '', rueckreiseBis: '', rueckreiseKm: '', pauseMin: '' });
+const emptyTag       = (): MontagTag    => ({ datum: '', vonZeit: '', bisZeit: '', pauseMin: '', tagTyp: '' });
+const emptyMonteur   = (): Monteur      => ({ name: '', tage: [emptyTag()] });
 const emptyMaterial  = (): MaterialRow  => ({ pos: '', beschreibung: '', teilenummer: '', stk: '' });
 
 const initialForm = (): FormData => ({
@@ -267,8 +271,7 @@ const initialForm = (): FormData => ({
   maschinen: Array.from({ length: 6 }, emptyMaschine),
   arbeitenChecks: { Montage: false, Inbetriebnahme: false, Softwareupdate: false, Wartung: false, Reparatur: false },
   arbeitenSonstiges: '',
-  reiseChecks: { PKW: false, Flugzeug: false, Zug: false, Hotel: false, Sonstiges: false },
-  zeiten: Array.from({ length: 7 }, emptyZeit),
+  monteure: [emptyMonteur()],
   material: Array.from({ length: 15 }, emptyMaterial),
   nameGerlieva: '', nameKunde: '', signatureDate: '',
   bemerkung: '',
@@ -278,8 +281,51 @@ const initialForm = (): FormData => ({
 // Checkbox keys are stored in German (stable internal keys), display label is derived from t[]
 const ARBEITEN_KEYS = ['Montage', 'Inbetriebnahme', 'Softwareupdate', 'Wartung', 'Reparatur'] as const;
 const ARBEITEN_TK: Record<string, TKeys> = { Montage: 'arbMontage', Inbetriebnahme: 'arbInbetrieb', Softwareupdate: 'arbSoftware', Wartung: 'arbWartung', Reparatur: 'arbReparatur' };
-const REISE_KEYS   = ['PKW', 'Flugzeug', 'Zug', 'Hotel', 'Sonstiges'] as const;
-const REISE_TK: Record<string, TKeys>    = { PKW: 'reisePkw', Flugzeug: 'reiseFlugzeug', Zug: 'reiseZug', Hotel: 'reiseHotel', Sonstiges: 'reiseSonstiges' };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Hilfsfunktionen Zeitberechnung
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function calcNettoMin(tag: MontagTag): number {
+  if (!tag.vonZeit || !tag.bisZeit) return 0;
+  const [vh, vm] = tag.vonZeit.split(':').map(Number);
+  const [bh, bm] = tag.bisZeit.split(':').map(Number);
+  const diff = (bh * 60 + bm) - (vh * 60 + vm);
+  const pause = parseInt(tag.pauseMin) || 0;
+  return diff > 0 ? diff - pause : 0;
+}
+
+function calcNachtMin(tag: MontagTag): number {
+  if (!tag.vonZeit || !tag.bisZeit) return 0;
+  const [vh, vm] = tag.vonZeit.split(':').map(Number);
+  const [bh, bm] = tag.bisZeit.split(':').map(Number);
+  const von  = vh * 60 + vm;
+  const bis  = bh * 60 + bm;
+  if (bis <= von) return 0;
+  const NACHT_START = 20 * 60;
+  const NACHT_ENDE  =  6 * 60;
+  const vorSechs = von < NACHT_ENDE ? Math.min(bis, NACHT_ENDE) - von : 0;
+  const nachZwanzig = bis > NACHT_START ? bis - Math.max(von, NACHT_START) : 0;
+  return Math.max(0, vorSechs + nachZwanzig);
+}
+
+function formatMin(min: number): string {
+  if (min <= 0) return '';
+  return `${String(Math.floor(min / 60)).padStart(2, '0')} h ${String(min % 60).padStart(2, '0')} min`;
+}
+
+function calcGesamtBreakdown(monteure: Monteur[]): { total: number; samstag: number; sonntag: number; feiertag: number; nacht: number } {
+  let total = 0, samstag = 0, sonntag = 0, feiertag = 0, nacht = 0;
+  monteure.forEach(m => m.tage.forEach(tag => {
+    const min = calcNettoMin(tag);
+    total += min;
+    if (tag.tagTyp === 'samstag')  samstag  += min;
+    if (tag.tagTyp === 'sonntag')  sonntag  += min;
+    if (tag.tagTyp === 'feiertag') feiertag += min;
+    nacht += calcNachtMin(tag);
+  }));
+  return { total, samstag, sonntag, feiertag, nacht };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Language Switcher
@@ -362,17 +408,24 @@ function SignatureModal({ label, existing, onClose, t }: SigModalProps) {
     const resize = () => {
       const container = canvas.parentElement!;
       const dpr = window.devicePixelRatio || 1;
-      const w = container.clientWidth - 16, h = container.clientHeight - 16;
+      const w = Math.max(container.clientWidth - 16, 100);
+      const h = Math.max(container.clientHeight - 16, 80);
       const tmp = document.createElement('canvas');
       tmp.width = canvas.width; tmp.height = canvas.height;
       tmp.getContext('2d')!.drawImage(canvas, 0, 0);
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
       canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-      const ctx = canvas.getContext('2d')!; ctx.scale(dpr, dpr); ctx.drawImage(tmp, 0, 0, w, h);
+      const ctx = canvas.getContext('2d')!;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+      const oldW = tmp.width / dpr, oldH = tmp.height / dpr;
+      ctx.drawImage(tmp, 0, 0, oldW, oldH, 0, 0, w, h);
     };
-    setTimeout(resize, 150);
+    setTimeout(resize, 50);
+    const observer = new ResizeObserver(() => resize());
+    if (canvas.parentElement) observer.observe(canvas.parentElement);
     window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
+    return () => { observer.disconnect(); window.removeEventListener('resize', resize); };
   }, []);
 
   useEffect(() => {
@@ -385,31 +438,38 @@ function SignatureModal({ label, existing, onClose, t }: SigModalProps) {
     }, 200);
   }, [existing]);
 
-  const pos = (e: React.MouseEvent | React.TouchEvent, c: HTMLCanvasElement) => {
+  const getPos = (e: React.MouseEvent | React.TouchEvent, c: HTMLCanvasElement) => {
     const r = c.getBoundingClientRect(), src = 'touches' in e ? e.touches[0] : e;
-    return { x: src.clientX - r.left, y: src.clientY - r.top };
+    const dpr = window.devicePixelRatio || 1;
+    const scaleX = (c.width / dpr) / r.width;
+    const scaleY = (c.height / dpr) / r.height;
+    return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
   };
-  const onStart = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); drawing.current = true; const c = canvasRef.current!; const ctx = c.getContext('2d')!; const p = pos(e, c); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
-  const onMove  = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); if (!drawing.current) return; const c = canvasRef.current!; const ctx = c.getContext('2d')!; const p = pos(e, c); ctx.lineTo(p.x, p.y); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); };
+  const onStart = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); drawing.current = true; const c = canvasRef.current!; const ctx = c.getContext('2d')!; const p = getPos(e, c); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+  const onMove  = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); if (!drawing.current) return; const c = canvasRef.current!; const ctx = c.getContext('2d')!; const p = getPos(e, c); ctx.lineTo(p.x, p.y); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(); };
   const onStop  = () => { drawing.current = false; canvasRef.current?.getContext('2d')?.closePath(); };
 
-  const tbtn = (bg: string): React.CSSProperties => ({ background: bg, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 4, fontSize: 11, cursor: 'pointer', marginRight: 4, fontFamily: 'Arial, sans-serif' });
+  const tbtn = (bg: string): React.CSSProperties => ({
+    background: bg, color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 4,
+    fontSize: 13, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Arial, sans-serif',
+    minHeight: 44, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent',
+  });
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: '#fff', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ background: '#1a2744', color: '#fff', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: 13, fontWeight: 'bold', flex: 1 }}>✍️ {label}</span>
+      <div style={{ background: '#1a2744', color: '#fff', padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <span style={{ fontSize: 13, fontWeight: 'bold', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>✍️ {label}</span>
         <button onClick={() => { const c = canvasRef.current!; c.getContext('2d')!.clearRect(0, 0, c.width, c.height); }} style={tbtn('#e8460a')}>{t.sigClear}</button>
         <button onClick={() => onClose()} style={tbtn('#888')}>{t.sigCancel}</button>
         <button onClick={() => onClose(canvasRef.current?.toDataURL('image/png'))} style={tbtn('#2a7a2a')}>{t.sigOk}</button>
       </div>
-      <div style={{ flex: 1, padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0' }}>
+      <div style={{ flex: 1, padding: 8, display: 'flex', alignItems: 'stretch', justifyContent: 'center', background: '#f0f0f0', overflow: 'hidden' }}>
         <canvas ref={canvasRef} width={400} height={200}
-          style={{ background: 'white', border: '2px solid #aaa', borderRadius: 4, touchAction: 'none', cursor: 'crosshair', maxWidth: '100%', maxHeight: '100%' }}
+          style={{ background: 'white', border: '2px solid #aaa', borderRadius: 4, touchAction: 'none', cursor: 'crosshair', width: '100%', height: '100%', display: 'block' }}
           onMouseDown={onStart} onMouseMove={onMove} onMouseUp={onStop} onMouseLeave={onStop}
           onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onStop} />
       </div>
-      <div style={{ textAlign: 'center', padding: 6, fontSize: 8, color: '#666' }}>{t.sigLabel}</div>
+      <div style={{ textAlign: 'center', padding: '6px 0 max(6px, env(safe-area-inset-bottom))', fontSize: 11, color: '#666', flexShrink: 0 }}>{t.sigLabel}</div>
     </div>
   );
 }
@@ -423,8 +483,9 @@ function SigPreview({ dataUrl, onClick, tapLabel }: { dataUrl?: string; onClick:
   const redraw = useCallback(() => {
     const canvas = canvasRef.current; if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    const w = rect.width || 300, h = rect.height || 90;
+    const parent = canvas.parentElement;
+    const w = (parent ? parent.clientWidth : canvas.offsetWidth) || 300;
+    const h = (parent ? parent.clientHeight : canvas.offsetHeight) || 80;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
     canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
     const ctx = canvas.getContext('2d')!;
@@ -432,26 +493,26 @@ function SigPreview({ dataUrl, onClick, tapLabel }: { dataUrl?: string; onClick:
     if (dataUrl) {
       const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, w, h); img.src = dataUrl;
     } else {
-      const fontSize = Math.max(11, Math.round(w * 0.045));
+      const fontSize = Math.max(12, Math.round(w * 0.045));
       ctx.fillStyle = '#bbb'; ctx.font = `${fontSize}px Arial`; ctx.textAlign = 'center';
-      ctx.fillText(tapLabel, w / 2, h / 2);
+      ctx.fillText(tapLabel, w / 2, h / 2 + fontSize * 0.35);
     }
   }, [dataUrl, tapLabel]);
+
   useEffect(() => {
-    setTimeout(redraw, 50);
-    // ResizeObserver reagiert auf Zoom UND Fenstergröße
+    const t1 = setTimeout(redraw, 50);
+    const t2 = setTimeout(redraw, 300);
     const ro = new ResizeObserver(() => redraw());
-    if (canvasRef.current) ro.observe(canvasRef.current);
+    if (canvasRef.current?.parentElement) ro.observe(canvasRef.current.parentElement);
     window.addEventListener('resize', redraw);
-    return () => { ro.disconnect(); window.removeEventListener('resize', redraw); };
+    return () => { clearTimeout(t1); clearTimeout(t2); ro.disconnect(); window.removeEventListener('resize', redraw); };
   }, [redraw]);
+
   return (
-    <div style={{ position: 'relative', width: '100%', aspectRatio: '4/1' }}>
-      {/* Bildschirm: Canvas (wird beim Druck ausgeblendet) */}
-      <canvas ref={canvasRef} width={400} height={100} onClick={onClick}
+    <div style={{ position: 'relative', width: '100%', aspectRatio: '3/1' }}>
+      <canvas ref={canvasRef} width={400} height={133} onClick={onClick}
         className="sig-canvas"
-        style={{ border: '2px dashed #999', background: 'white', cursor: 'pointer', width: '100%', height: '100%', borderRadius: 3, display: 'block', touchAction: 'none' }} />
-      {/* Druck: <img> skaliert sich sauber auf A4 */}
+        style={{ border: '2px dashed #999', background: 'white', cursor: 'pointer', width: '100%', height: '100%', borderRadius: 3, display: 'block', touchAction: 'none', WebkitTapHighlightColor: 'transparent' }} />
       {dataUrl
         ? <img src={dataUrl} alt="Unterschrift" className="sig-print-img"
             style={{ display: 'none', width: '100%', height: '100%', objectFit: 'contain', border: '1px solid #000' }} />
@@ -486,33 +547,20 @@ export default function ServiceberichtPage() {
   const [lang, setLang] = useState<Lang>('de');
   const t = translations[lang] as T;
 
-  const [form, setForm]       = useState<FormData>(initialForm);
+  const [form, setForm]         = useState<FormData>(initialForm);
   const [sigModal, setSigModal] = useState<{ id: 'sig-gerlieva' | 'sig-kunde'; label: string } | null>(null);
-  const [toast, setToast]     = useState<{ msg: string; type: 'success' | 'error' | ''; visible: boolean }>({ msg: '', type: '', visible: false });
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [toast, setToast]       = useState<{ msg: string; type: 'success' | 'error' | ''; visible: boolean }>({ msg: '', type: '', visible: false });
+  const [toolbarH, setToolbarH] = useState(52);
+  const fileInputRef  = useRef<HTMLInputElement>(null);
+  const toolbarRef    = useRef<HTMLDivElement>(null);
 
-  // ── localStorage Persistierung ──
-  const STORAGE_KEY = 'servicebericht_form_data';
-
-  // Beim Mount: Daten laden
+  // Dynamisches marginTop: passt sich an wenn Toolbar durch Wrap höher wird
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        if (data && data.version === 1) {
-          setForm(data);
-        }
-      } catch (err) {
-        console.error('Fehler beim Laden:', err);
-      }
-    }
+    const toolbar = toolbarRef.current; if (!toolbar) return;
+    const ro = new ResizeObserver(() => setToolbarH(toolbar.offsetHeight));
+    ro.observe(toolbar);
+    return () => ro.disconnect();
   }, []);
-
-  // Bei jeder Änderung: Daten speichern
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(form));
-  }, [form]);
 
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type, visible: true });
@@ -522,9 +570,40 @@ export default function ServiceberichtPage() {
   // ── Field helpers ──────────────────────────────────────────────────────────
   const setField     = <K extends keyof FormData>(key: K, val: FormData[K]) => setForm(f => ({ ...f, [key]: val }));
   const setMaschine  = (i: number, f: keyof MaschineRow, v: string) => setForm(s => { const m = [...s.maschinen]; m[i] = { ...m[i], [f]: v }; return { ...s, maschinen: m }; });
-  const setZeit      = (i: number, f: keyof ZeitRow, v: string)     => setForm(s => { const z = [...s.zeiten];   z[i] = { ...z[i], [f]: v }; return { ...s, zeiten: z };    });
   const setMaterial  = (i: number, f: keyof MaterialRow, v: string) => setForm(s => { const m = [...s.material]; m[i] = { ...m[i], [f]: v }; return { ...s, material: m };  });
-  const toggleCheck  = (group: 'arbeitenChecks' | 'reiseChecks', key: string) => setForm(s => ({ ...s, [group]: { ...s[group], [key]: !s[group][key] } }));
+  const toggleCheck  = (group: 'arbeitenChecks', key: string) => setForm(s => ({ ...s, [group]: { ...s[group], [key]: !s[group][key] } }));
+
+  // ── Monteur helpers ────────────────────────────────────────────────────────
+  const setMonteurName = (mi: number, val: string) =>
+    setForm(f => { const m = f.monteure.map((mo, i) => i === mi ? { ...mo, name: val } : mo); return { ...f, monteure: m }; });
+
+  const setMontagTag = (mi: number, ti: number, key: keyof MontagTag, val: string) =>
+    setForm(f => {
+      const m = f.monteure.map((mo, i) => {
+        if (i !== mi) return mo;
+        const tage = mo.tage.map((tag, j) => {
+          if (j !== ti) return tag;
+          const updated = { ...tag, [key]: val };
+          if (key === 'datum' && val) {
+            const dow = new Date(val).getDay();
+            const autoTyp = dow === 6 ? 'samstag' : dow === 0 ? 'sonntag' : '';
+            if (tag.tagTyp !== 'feiertag') updated.tagTyp = autoTyp as MontagTag['tagTyp'];
+          }
+          return updated;
+        });
+        return { ...mo, tage };
+      });
+      return { ...f, monteure: m };
+    });
+
+  const addMonteur    = () => setForm(f => ({ ...f, monteure: [...f.monteure, emptyMonteur()] }));
+  const removeMonteur = () => setForm(f => f.monteure.length <= 1 ? f : { ...f, monteure: f.monteure.slice(0, -1) });
+  const addTag        = (mi: number) => setForm(f => { const m = f.monteure.map((mo, i) => i === mi ? { ...mo, tage: [...mo.tage, emptyTag()] } : mo); return { ...f, monteure: m }; });
+  const removeTag     = (mi: number, ti: number) => setForm(f => { const m = f.monteure.map((mo, i) => { if (i !== mi || mo.tage.length <= 1) return mo; return { ...mo, tage: mo.tage.filter((_, j) => j !== ti) }; }); return { ...f, monteure: m }; });
+
+  // ── Computed ───────────────────────────────────────────────────────────────
+  const gesamtBreakdown = calcGesamtBreakdown(form.monteure);
+  const gesamtAZ        = formatMin(gesamtBreakdown.total);
 
   // ── File name ──────────────────────────────────────────────────────────────
   const getFileName = (ext: string) => {
@@ -554,18 +633,46 @@ export default function ServiceberichtPage() {
   };
 
   const handleShare = async () => {
-    try {
-      const blob = new Blob([JSON.stringify(collectFormData(), null, 2)], { type: 'application/json' });
-      const file = new File([blob], getFileName('json'), { type: 'application/json' });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: 'Servicebericht GERLIEVA', files: [file] });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = getFileName('json');
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
-        showToast(t.toastDownloaded, 'success');
+    const jsonStr = JSON.stringify(collectFormData(), null, 2);
+    const baseName = getFileName('json');
+    // Versuche zuerst als .json zu teilen, Fallback auf .txt (breiter unterstützt)
+    const tryShare = async (mimeType: string, ext: string) => {
+      const blob = new Blob([jsonStr], { type: mimeType });
+      const fileName = baseName.replace(/\.json$/, '.' + ext);
+      const file = new File([blob], fileName, { type: mimeType });
+      if (typeof navigator.share === 'function') {
+        try {
+          if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+            await navigator.share({ title: 'Servicebericht GERLIEVA', files: [file] });
+            return true;
+          }
+        } catch (e) {
+          if ((e as Error).name === 'AbortError') return true; // User hat abgebrochen → kein Fehler
+        }
       }
+      return false;
+    };
+    try {
+      // 1. Versuch: .json
+      if (await tryShare('application/json', 'json')) return;
+      // 2. Versuch: .txt (iOS Safari akzeptiert text/plain zuverlässig)
+      if (await tryShare('text/plain', 'txt')) return;
+      // 3. Versuch: nur Text ohne Datei
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ title: 'Servicebericht GERLIEVA', text: jsonStr });
+          return;
+        } catch (e) {
+          if ((e as Error).name === 'AbortError') return;
+        }
+      }
+      // Fallback: Download
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = baseName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      showToast(t.toastDownloaded, 'success');
     } catch (err: unknown) {
       if ((err as Error).name !== 'AbortError') showToast(t.toastError + (err as Error).message, 'error');
     }
@@ -599,12 +706,12 @@ export default function ServiceberichtPage() {
       <style>{printStyles}</style>
 
       {/* ── Toolbar ── */}
-      <div style={s.toolbar} className="no-print">
+      <div ref={toolbarRef} style={s.toolbar} className="no-print">
         <button onClick={() => fileInputRef.current?.click()} style={{ ...s.tbtn, background: '#8e24aa' }}>{t.loadJson}</button>
         <button onClick={handlePdf}   style={{ ...s.tbtn, background: '#e8460a' }}>{t.savePdf}</button>
         <button onClick={handleShare} style={{ ...s.tbtn, background: '#1a7a3a' }}>{t.shareJson}</button>
         <button onClick={handleSave}  style={{ ...s.tbtn, background: '#1a5fa8' }}>{t.saveJson}</button>
-        <span style={{ color: '#a8b8d8', fontSize: 9 }}>{t.toolbarTitle}</span>
+        <span style={{ color: '#a8b8d8', fontSize: 9, display: 'none' }} className="toolbar-title">{t.toolbarTitle}</span>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
           <LangSwitcher current={lang} onChange={setLang} />
           <a href="/" style={{ ...s.tbtn, background: '#1a5fa8', textDecoration: 'none' }}>{t.home}</a>
@@ -613,9 +720,8 @@ export default function ServiceberichtPage() {
       </div>
 
       {/* ── Page body ── */}
-      <div style={s.body} className="print-body">
+      <div style={{ ...s.body, paddingTop: toolbarH + 12 }} className="print-body">
         <div style={s.container} className="print-container">
-
           {/* Header */}
           <div style={s.header}>
             <h1 style={{ fontSize: 16, fontWeight: 'bold' }}>GERLIEVA Sprühtechnik GmbH</h1>
@@ -641,13 +747,13 @@ export default function ServiceberichtPage() {
 
           {/* ── Ansprechpartner + Servicetechniker ── */}
           <div style={{ display: 'flex', gap: 16, marginBottom: 10, flexWrap: 'wrap' }}>
-            <div style={s.inlineField}>
+            <div style={{ ...s.inlineField, flex: '1 1 200px' }}>
               <label style={s.label}>{t.labelAnsprechpartner}</label>
-              <input type="text" value={form.ansprechpartner} onChange={e => setField('ansprechpartner', e.target.value)} style={s.gridInput} />
+              <input type="text" value={form.ansprechpartner} onChange={e => setField('ansprechpartner', e.target.value)} style={{ ...s.gridInput, flex: 1 }} />
             </div>
-            <div style={s.inlineField}>
+            <div style={{ ...s.inlineField, flex: '1 1 200px' }}>
               <label style={s.label}>{t.labelTechniker}</label>
-              <input type="text" value={form.servicetechniker} onChange={e => setField('servicetechniker', e.target.value)} style={s.gridInput} />
+              <input type="text" value={form.servicetechniker} onChange={e => setField('servicetechniker', e.target.value)} style={{ ...s.gridInput, flex: 1 }} />
             </div>
           </div>
 
@@ -678,67 +784,14 @@ export default function ServiceberichtPage() {
             <div style={s.checkboxList}>
               {ARBEITEN_KEYS.map(k => (
                 <label key={k} style={s.checkboxItem}>
-                  <input type="checkbox" checked={form.arbeitenChecks[k]} onChange={() => toggleCheck('arbeitenChecks', k)} />
+                  <input type="checkbox" checked={form.arbeitenChecks[k]} onChange={() => toggleCheck('arbeitenChecks', k)}
+                    style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#1a5fa8' }} />
                   {' '}{t[ARBEITEN_TK[k]]}
                 </label>
               ))}
             </div>
             <input type="text" value={form.arbeitenSonstiges} onChange={e => setField('arbeitenSonstiges', e.target.value)}
-              style={{ width: '100%', border: '1px solid #ddd', padding: 6, borderRadius: 4, marginTop: 8, fontSize: 11, fontFamily: 'Arial, sans-serif', boxSizing: 'border-box' }} />
-          </div>
-
-          {/* ── Reisezeiten ── */}
-          <div style={{ ...s.section, pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-            <h2 style={s.sectionTitle}>{t.sectionReise}</h2>
-            <div style={s.checkboxList}>
-              {REISE_KEYS.map(k => (
-                <label key={k} style={s.checkboxItem}>
-                  <input type="checkbox" checked={form.reiseChecks[k]} onChange={() => toggleCheck('reiseChecks', k)} />
-                  {' '}{t[REISE_TK[k]]}
-                </label>
-              ))}
-            </div>
-            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              <table style={{ ...s.table, marginTop: 10, pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                <colgroup>
-                  <col style={{ width: 30 }} /><col style={{ width: 90 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} />
-                  <col style={{ width: 50 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} /><col style={{ width: 70 }} />
-                  <col style={{ width: 70 }} /><col style={{ width: 50 }} /><col style={{ width: 65 }} />
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th rowSpan={2} style={s.th}>{t.thTag}</th>
-                    <th rowSpan={2} style={s.th}>{t.thDatum}</th>
-                    <th colSpan={2} style={{ ...s.th, background: '#d0d0d0' }}>{t.thAnreise}</th>
-                    <th rowSpan={2} style={s.th}>{t.thKm}</th>
-                    <th colSpan={2} style={{ ...s.th, background: '#d0d0d0' }}>{t.thArbeitszeit}</th>
-                    <th colSpan={2} style={{ ...s.th, background: '#d0d0d0' }}>{t.thRueckreise}</th>
-                    <th rowSpan={2} style={s.th}>{t.thKm}</th>
-                    <th rowSpan={2} style={s.th}>{t.thPause}</th>
-                  </tr>
-                  <tr>
-                    {[t.thVon, t.thBis, t.thVon, t.thBis, t.thVon, t.thBis].map((h, i) => <th key={i} style={s.th}>{h}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {form.zeiten.map((row, i) => (
-                    <tr key={i}>
-                      <td style={{ ...s.td, textAlign: 'center' }}>{i + 1}</td>
-                      <td style={s.td}><input type="date"   value={row.datum}         onChange={e => setZeit(i, 'datum', e.target.value)}         style={s.cellInput} /></td>
-                      <td style={s.td}><input type="time"   value={row.anreiseVon}    onChange={e => setZeit(i, 'anreiseVon', e.target.value)}    style={{ ...s.cellInput, width: 80 }} /></td>
-                      <td style={s.td}><input type="time"   value={row.anreiseBis}    onChange={e => setZeit(i, 'anreiseBis', e.target.value)}    style={{ ...s.cellInput, width: 80 }} /></td>
-                      <td style={s.td}><input type="number" value={row.anreiseKm}     onChange={e => setZeit(i, 'anreiseKm', e.target.value)}     max={9999} style={{ ...s.cellInput, width: 60 }} /></td>
-                      <td style={s.td}><input type="time"   value={row.arbeitVon}     onChange={e => setZeit(i, 'arbeitVon', e.target.value)}     style={{ ...s.cellInput, width: 80 }} /></td>
-                      <td style={s.td}><input type="time"   value={row.arbeitBis}     onChange={e => setZeit(i, 'arbeitBis', e.target.value)}     style={{ ...s.cellInput, width: 80 }} /></td>
-                      <td style={s.td}><input type="time"   value={row.rueckreiseVon} onChange={e => setZeit(i, 'rueckreiseVon', e.target.value)} style={{ ...s.cellInput, width: 80 }} /></td>
-                      <td style={s.td}><input type="time"   value={row.rueckreiseBis} onChange={e => setZeit(i, 'rueckreiseBis', e.target.value)} style={{ ...s.cellInput, width: 80 }} /></td>
-                      <td style={s.td}><input type="number" value={row.rueckreiseKm}  onChange={e => setZeit(i, 'rueckreiseKm', e.target.value)}  max={9999} style={{ ...s.cellInput, width: 60 }} /></td>
-                      <td style={s.td}><input type="number" value={row.pauseMin}      onChange={e => setZeit(i, 'pauseMin', e.target.value)}      max={99999999} placeholder="Min" style={{ ...s.cellInput, width: 80 }} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              style={{ width: '100%', border: '1px solid #ddd', padding: '8px 6px', borderRadius: 4, marginTop: 8, fontSize: 16, fontFamily: 'Arial, sans-serif', boxSizing: 'border-box', color: '#000' }} />
           </div>
 
           {/* ── Beschreibung / Bemerkung ── */}
@@ -753,8 +806,8 @@ export default function ServiceberichtPage() {
                 resize: 'vertical',
                 border: '1px solid #ddd',
                 borderRadius: 4,
-                padding: 6,
-                fontSize: 11,
+                padding: 8,
+                fontSize: 16,
                 fontFamily: 'Arial, sans-serif',
                 lineHeight: 1.6,
                 boxSizing: 'border-box',
@@ -792,26 +845,180 @@ export default function ServiceberichtPage() {
             </div>
           </div>
 
-          {/* ── Unterschriften ── */}
+          {/* ── Zeitenerfassung ── */}
           <div style={{ ...s.section, marginTop: 20 }}>
-            <h2 style={{ fontSize: 14, background: '#f0f0f0', padding: 8, borderRadius: 4, borderBottom: '3px solid #000', marginBottom: 15 }}>
-              {t.sectionSign}
-            </h2>
-            <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
+            <h2 style={s.sectionTitle}>{t.sectionZeiten}</h2>
+
+            {/* Monteur-Stepper */}
+            <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 12, fontWeight: 'bold' }}>{t.labelMonteur}:</span>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #aaa', borderRadius: 6, overflow: 'hidden' }}>
+                <button onClick={removeMonteur} disabled={form.monteure.length <= 1}
+                  style={{ width: 40, height: 36, fontSize: 20, lineHeight: 1, border: 'none', borderRight: '1px solid #aaa',
+                    background: form.monteure.length > 1 ? '#fdd' : '#eee',
+                    color: form.monteure.length > 1 ? '#900' : '#aaa',
+                    cursor: form.monteure.length > 1 ? 'pointer' : 'default', fontFamily: 'Arial',
+                    touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>−</button>
+                <span style={{ minWidth: 36, textAlign: 'center', fontSize: 14, fontWeight: 'bold', padding: '0 8px', userSelect: 'none' }}>
+                  {form.monteure.length}
+                </span>
+                <button onClick={addMonteur}
+                  style={{ width: 40, height: 36, fontSize: 20, lineHeight: 1, border: 'none', borderLeft: '1px solid #aaa',
+                    background: '#e8f0ff', color: '#226', cursor: 'pointer', fontFamily: 'Arial',
+                    touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>+</button>
+              </div>
+            </div>
+
+            {form.monteure.map((monteur, mi) => {
+              const monteurTotal = monteur.tage.reduce((sum, tag) => sum + calcNettoMin(tag), 0);
+              return (
+                <div key={mi} style={{ marginBottom: 8, border: '1px solid #ccc', borderRadius: 4 }}>
+                  {/* Monteur-Kopfzeile */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#cfdff5', padding: '4px 8px', borderBottom: '1px solid #ccc', borderRadius: '4px 4px 0 0' }}>
+                    <strong style={{ fontSize: 10, whiteSpace: 'nowrap' }}>{t.labelMonteur} {mi + 1}:</strong>
+                    <input type="text" value={monteur.name} onChange={e => setMonteurName(mi, e.target.value)}
+                      style={{ flex: 1, border: 'none', borderBottom: '1px solid #666', outline: 'none', fontFamily: 'Arial, sans-serif', fontSize: 10, fontWeight: 'bold', background: 'transparent', padding: '1px 2px', color: '#000' }} />
+                    {monteurTotal > 0 && (
+                      <span style={{ fontSize: 9, fontWeight: 'bold', background: '#e8f4e8', padding: '1px 6px', borderRadius: 3, border: '1px solid #aaa', whiteSpace: 'nowrap' }}>
+                        Σ {formatMin(monteurTotal)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Tageszeilen – Tabelle auf Desktop, Cards auf Mobile */}
+                  <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    {/* Desktop-Tabelle (ab 600px) */}
+                    <table className="zeit-table" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' as const }}>
+                      <colgroup>
+                        <col style={{ width: '18%' }} />
+                        <col style={{ width: '14%' }} />
+                        <col style={{ width: '14%' }} />
+                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '17%' }} />
+                        <col style={{ width: '25%' }} />
+                      </colgroup>
+                      {mi === 0 && (
+                        <thead>
+                          <tr>
+                            <th style={{ ...s.th, fontSize: 9 }}>{t.thDatum}</th>
+                            <th style={{ ...s.th, fontSize: 9 }}>{t.thAzVon}</th>
+                            <th style={{ ...s.th, fontSize: 9 }}>{t.thAzBis}</th>
+                            <th style={{ ...s.th, fontSize: 9 }}>{t.thPause}</th>
+                            <th style={{ ...s.th, fontSize: 9, background: '#d0ecd0' }}>{t.labelGesamtAZ}</th>
+                            <th style={{ ...s.th, fontSize: 9 }}>{t.thTagTyp}</th>
+                          </tr>
+                        </thead>
+                      )}
+                      <tbody>
+                        {monteur.tage.map((tag, ti) => {
+                          const netto = calcNettoMin(tag);
+                          const bgMap: Record<string, string> = { '': ti % 2 === 0 ? '#fff' : '#f8f8f8', feiertag: '#fff3cd', samstag: '#ddeeff', sonntag: '#fde8e8' };
+                          return (
+                            <tr key={ti} style={{ background: bgMap[tag.tagTyp] ?? (ti % 2 === 0 ? '#fff' : '#f8f8f8') }}>
+                              <td style={s.td} data-label={t.thDatum}>
+                                <input type="date" value={tag.datum} onChange={e => setMontagTag(mi, ti, 'datum', e.target.value)}
+                                  style={{ ...s.cellInput, fontSize: 14, cursor: 'pointer', colorScheme: 'light', touchAction: 'manipulation' }} />
+                              </td>
+                              <td style={{ ...s.td, textAlign: 'center' }} data-label={t.thAzVon}>
+                                <input type="time" value={tag.vonZeit} onChange={e => setMontagTag(mi, ti, 'vonZeit', e.target.value)}
+                                  style={{ ...s.cellInput, textAlign: 'center', fontSize: 14, cursor: 'pointer', colorScheme: 'light', touchAction: 'manipulation' }} />
+                              </td>
+                              <td style={{ ...s.td, textAlign: 'center' }} data-label={t.thAzBis}>
+                                <input type="time" value={tag.bisZeit} onChange={e => setMontagTag(mi, ti, 'bisZeit', e.target.value)}
+                                  style={{ ...s.cellInput, textAlign: 'center', fontSize: 14, cursor: 'pointer', colorScheme: 'light', touchAction: 'manipulation' }} />
+                              </td>
+                              <td style={{ ...s.td, textAlign: 'center' }} data-label={t.thPause}>
+                                <input type="number" min={0} value={tag.pauseMin} onChange={e => setMontagTag(mi, ti, 'pauseMin', e.target.value)}
+                                  style={{ ...s.cellInput, textAlign: 'center', fontSize: 14, touchAction: 'manipulation' }} />
+                              </td>
+                              <td style={{ ...s.td, textAlign: 'center', fontWeight: 'bold', background: ti % 2 === 0 ? '#e8f4e8' : '#daeeda', fontSize: 11 }} data-label={t.labelGesamtAZ}>
+                                {formatMin(netto)}
+                              </td>
+                              <td style={{ ...s.td, padding: 2 }} data-label={t.thTagTyp}>
+                                <select value={tag.tagTyp} onChange={e => setMontagTag(mi, ti, 'tagTyp', e.target.value)}
+                                  style={{ width: '100%', border: 'none', outline: 'none', fontFamily: 'Arial, sans-serif', fontSize: 13, background: bgMap[tag.tagTyp] ?? 'transparent', cursor: 'pointer', padding: '2px 2px', borderRadius: 2, color: '#000', touchAction: 'manipulation' }}>
+                                  <option value="">{t.tagTypNormal}</option>
+                                  <option value="feiertag">{t.tagTypFeiertag}</option>
+                                  <option value="samstag">{t.tagTypSamstag}</option>
+                                  <option value="sonntag">{t.tagTypSonntag}</option>
+                                </select>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* + Tag / - Tag Buttons */}
+                  <div className="no-print" style={{ padding: '6px 8px', display: 'flex', gap: 6 }}>
+                    <button onClick={() => addTag(mi)}
+                      style={{ fontSize: 12, padding: '6px 16px', background: '#e8f0ff', border: '1px solid #99b', borderRadius: 4, cursor: 'pointer', fontFamily: 'Arial, sans-serif', minHeight: 36, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>
+                      {t.btnTagHinzu}
+                    </button>
+                    <button onClick={() => removeTag(mi, monteur.tage.length - 1)} disabled={monteur.tage.length <= 1}
+                      style={{ fontSize: 12, padding: '6px 16px', background: monteur.tage.length > 1 ? '#fdd' : '#eee', border: '1px solid #bbb', borderRadius: 4, cursor: monteur.tage.length > 1 ? 'pointer' : 'default', color: monteur.tage.length > 1 ? '#900' : '#999', fontFamily: 'Arial, sans-serif', minHeight: 36, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}>
+                      {t.btnTagEntf2}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Gesamt-Summe */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 6, padding: '6px 10px', border: '1px solid #aaa', borderRadius: 4, background: '#f7f7f7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <strong style={{ fontSize: 10 }}>{t.labelGesamtAZ}</strong>
+                <span style={{ fontWeight: 'bold', fontSize: 11, background: '#e8f4e8', padding: '2px 10px', borderRadius: 3, border: '1px solid #aaa' }}>
+                  {gesamtAZ}
+                </span>
+              </div>
+              {gesamtBreakdown.samstag > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 9, color: '#555' }}>{t.tagTypSamstag}:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: 10, background: '#ddeeff', padding: '2px 8px', borderRadius: 3, border: '1px solid #99bbdd' }}>{formatMin(gesamtBreakdown.samstag)}</span>
+                </div>
+              )}
+              {gesamtBreakdown.sonntag > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 9, color: '#555' }}>{t.tagTypSonntag}:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: 10, background: '#fde8e8', padding: '2px 8px', borderRadius: 3, border: '1px solid #ddaaaa' }}>{formatMin(gesamtBreakdown.sonntag)}</span>
+                </div>
+              )}
+              {gesamtBreakdown.feiertag > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 9, color: '#555' }}>{t.tagTypFeiertag}:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: 10, background: '#fff3cd', padding: '2px 8px', borderRadius: 3, border: '1px solid #ddcc88' }}>{formatMin(gesamtBreakdown.feiertag)}</span>
+                </div>
+              )}
+              {gesamtBreakdown.nacht > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 9, color: '#555' }}>{t.tagTypNacht}:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: 10, background: '#e8e0f8', padding: '2px 8px', borderRadius: 3, border: '1px solid #aa99cc' }}>{formatMin(gesamtBreakdown.nacht)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Unterschriften ── */}
+          <div style={{ marginTop: 20, border: '1px solid #000', padding: 10, borderRadius: 4, boxSizing: 'border-box' }}>
+            <strong style={{ fontSize: 11, letterSpacing: '.03em' }}>{t.sectionSign}</strong>
+            <div style={{ display: 'flex', gap: 12, marginTop: 10, width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
               {(['sig-gerlieva', 'sig-kunde'] as const).map(id => {
                 const isGerlieva  = id === 'sig-gerlieva';
                 const label       = isGerlieva ? t.sigGerlieva : t.sigKunde;
                 const nameKey     = isGerlieva ? 'nameGerlieva' : 'nameKunde';
                 const placeholder = isGerlieva ? t.sigPlaceholderTech : t.sigPlaceholderKunde;
                 return (
-                  <div key={id} style={{ flex: '1 1 240px', minWidth: 0, border: '1px solid #ccc', borderRadius: 4, padding: '0.5em', background: '#fafafa' }}>
-                    <div style={{ fontSize: '0.85em', fontWeight: 'bold', marginBottom: '0.3em' }}>{label}</div>
+                  <div key={id} style={{ flex: '1 1 0', minWidth: 0, border: '1px solid #ccc', borderRadius: 4, padding: 8, background: '#fafafa', boxSizing: 'border-box', overflow: 'hidden' }}>
+                    <div style={{ fontSize: 9, fontWeight: 'bold', marginBottom: 4 }}>{label}</div>
                     <SigPreview dataUrl={form.signatures[id]} onClick={() => setSigModal({ id, label })} tapLabel={t.sigTap} />
-                    <div style={{ marginTop: '0.4em', display: 'flex', alignItems: 'center', gap: '0.4em' }}>
-                      <input type="text" placeholder={placeholder} value={form[nameKey]} onChange={e => setField(nameKey, e.target.value)}
-                        style={{ flex: 1, border: 'none', borderBottom: '1px solid #aaa', outline: 'none', fontSize: '0.85em', background: 'white', color: '#000' }} />
+                    <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <input type="text" value={form[nameKey]} onChange={e => setField(nameKey, e.target.value)}
+                        placeholder={placeholder}
+                        style={{ flex: 1, border: 'none', borderBottom: '1px solid #aaa', outline: 'none', fontSize: 14, background: 'transparent', fontFamily: 'Arial, sans-serif', color: '#000' }} />
                       <button onClick={() => clearSig(id)}
-                        style={{ fontSize: '0.75em', padding: '0.2em 0.5em', background: '#eee', border: '1px solid #bbb', borderRadius: 3, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        style={{ fontSize: 11, padding: '4px 10px', background: '#eee', border: '1px solid #bbb', borderRadius: 3, cursor: 'pointer', whiteSpace: 'nowrap', minHeight: 32, touchAction: 'manipulation' }}>
                         {t.sigDelete}
                       </button>
                     </div>
@@ -819,10 +1026,10 @@ export default function ServiceberichtPage() {
                 );
               })}
             </div>
-            <div style={{ textAlign: 'center', marginTop: 15, fontWeight: 'bold', fontSize: '0.9em' }}>
+            <div style={{ textAlign: 'center', marginTop: 12, fontWeight: 'bold', fontSize: 13 }}>
               {t.labelDatum}{' '}
               <input type="date" value={form.signatureDate} onChange={e => setField('signatureDate', e.target.value)}
-                style={{ border: '1px solid #ccc', padding: '0.3em 0.6em', borderRadius: 4, fontSize: '0.85em' }} />
+                style={{ border: '1px solid #ccc', padding: '6px 10px', borderRadius: 4, fontSize: 16, colorScheme: 'light', color: '#000', minHeight: 36, touchAction: 'manipulation' }} />
             </div>
           </div>
 
@@ -844,10 +1051,10 @@ export default function ServiceberichtPage() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const styles: Record<string, React.CSSProperties> = {
-  toolbar:      { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#1a2744', padding: '7px 18px', paddingLeft: 'max(18px, env(safe-area-inset-left))', paddingRight: 'max(18px, env(safe-area-inset-right))', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const },
-  tbtn:         { border: 'none', padding: '6px 16px', fontSize: 9, fontWeight: 'bold', borderRadius: 3, cursor: 'pointer', fontFamily: 'Arial, sans-serif', color: '#fff' },
-  body:         { fontFamily: 'Arial, sans-serif', fontSize: 11, padding: 20, paddingLeft: 'max(20px, env(safe-area-inset-left))', paddingRight: 'max(20px, env(safe-area-inset-right))', maxWidth: 1000, margin: '0 auto', background: '#f5f5f5', minHeight: '100vh' },
-  container:    { background: 'white', padding: 20, borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.1)', marginTop: 60 },
+  toolbar:      { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#1a2744', padding: '8px 12px', paddingLeft: 'max(12px, env(safe-area-inset-left))', paddingRight: 'max(12px, env(safe-area-inset-right))', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' as const },
+  tbtn:         { border: 'none', padding: '8px 12px', fontSize: 11, fontWeight: 'bold', borderRadius: 4, cursor: 'pointer', fontFamily: 'Arial, sans-serif', color: '#fff', minHeight: 36, touchAction: 'manipulation' as const, WebkitTapHighlightColor: 'transparent' },
+  body:         { fontFamily: 'Arial, sans-serif', fontSize: 13, padding: '12px 12px 32px', paddingLeft: 'max(12px, env(safe-area-inset-left))', paddingRight: 'max(12px, env(safe-area-inset-right))', paddingBottom: 'max(32px, env(safe-area-inset-bottom))', maxWidth: 1000, margin: '0 auto', background: '#f5f5f5', minHeight: '100vh', boxSizing: 'border-box' as const },
+  container:    { background: 'white', padding: 16, borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.1)' },
   header:       { borderBottom: '2px solid #000', marginBottom: 15, paddingBottom: 8 },
   section:      { marginBottom: 15, border: '1px solid #ccc', padding: 10, borderRadius: 4, background: 'white' },
   sectionTitle: { fontSize: 14, marginBottom: 10, background: '#f0f0f0', padding: 8, borderRadius: 4 },
@@ -855,15 +1062,59 @@ const styles: Record<string, React.CSSProperties> = {
   th:           { border: '1px solid #000', padding: 4, textAlign: 'center' as const, background: '#e0e0e0', fontWeight: 'bold', fontSize: 10 },
   td:           { border: '1px solid #000', padding: 4, textAlign: 'left' as const, fontSize: 10 },
   cellInput:    { width: '100%', border: 'none', padding: 2, background: 'white', color: '#000', fontSize: 10, fontFamily: 'Arial, sans-serif', boxSizing: 'border-box' as const },
-  gridRow:      { display: 'grid', gridTemplateColumns: 'minmax(100px, 140px) 1fr', gap: 8, marginBottom: 5, alignItems: 'center' },
-  label:        { fontWeight: 'bold' },
-  gridInput:    { border: '1px solid #ddd', padding: 4, borderRadius: 3, fontSize: 11, fontFamily: 'Arial, sans-serif', background: 'white', color: '#000' },
-  inlineField:  { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 },
-  checkboxList: { display: 'flex', flexWrap: 'wrap' as const, gap: 15, marginBottom: 8 },
-  checkboxItem: { display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' },
+  gridRow:      { display: 'grid', gridTemplateColumns: 'minmax(90px, 130px) 1fr', gap: 8, marginBottom: 6, alignItems: 'center' },
+  label:        { fontWeight: 'bold', fontSize: 13 },
+  gridInput:    { border: '1px solid #ddd', padding: '8px 6px', borderRadius: 4, fontSize: 16, fontFamily: 'Arial, sans-serif', background: 'white', color: '#000', minHeight: 36 },
+  inlineField:  { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 },
+  checkboxList: { display: 'flex', flexWrap: 'wrap' as const, gap: 12, marginBottom: 8 },
+  checkboxItem: { display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, minHeight: 36, padding: '2px 0' },
 };
 
 const printStyles = `
+  /* ── Globaler Reset: kein Overflow-Block beim Drehen ── */
+  html, body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+    height: auto !important;
+    min-height: 100%;
+  }
+
+  /* ── Mobile: Inputs >= 16px damit iOS nicht hineinzoomt ── */
+  @media screen and (max-width: 600px) {
+    input[type="text"], input[type="date"], input[type="time"],
+    input[type="number"], select, textarea {
+      font-size: 16px !important;
+    }
+    /* Zeiterfassung: Tabelle als Cards */
+    .zeit-table thead { display: none; }
+    .zeit-table, .zeit-table tbody, .zeit-table tr, .zeit-table td { display: block; width: 100%; }
+    .zeit-table tr {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 6px;
+      padding: 4px 6px;
+    }
+    .zeit-table td {
+      border: none !important;
+      border-bottom: 1px solid #eee !important;
+      padding: 4px 2px !important;
+      display: flex;
+      align-items: center;
+      min-height: 36px;
+    }
+    .zeit-table td:last-child { border-bottom: none !important; }
+    .zeit-table td::before {
+      content: attr(data-label);
+      font-weight: bold;
+      font-size: 10px;
+      color: #555;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+  }
+
   /* ── Dark-Mode Override: alle Inputs/Textareas immer hell ── */
   @media (prefers-color-scheme: dark) {
     input, textarea, select {
@@ -876,9 +1127,11 @@ const printStyles = `
       background-color: white !important;
     }
   }
-  /* ── orientation: Toolbar-Höhe anpassen ── */
-  @media screen and (orientation: landscape) and (max-height: 500px) {
-    .pwa-toolbar { padding-top: 4px !important; padding-bottom: 4px !important; }
+  /* ── Handy Querformat ── */
+  @media screen and (max-width: 900px) and (orientation: landscape) {
+    .toolbar-title { display: none !important; }
+    .print-body    { padding-left: max(8px, env(safe-area-inset-left)) !important; padding-right: max(8px, env(safe-area-inset-right)) !important; }
+    .print-container { padding: 10px !important; }
   }
   @media print {
     .no-print { display: none !important; }
@@ -923,5 +1176,10 @@ const printStyles = `
     .sig-canvas        { display: none !important; }
     .sig-print-img     { display: block !important; width: 100% !important; height: auto !important; max-height: 60px; object-fit: contain; border: 1px solid #000; }
     .sig-print-empty   { display: block !important; width: 100% !important; height: 50px !important; border: 1px solid #000; background: white; }
+
+    /* Zeiterfassung: Card-Layout zurück zu Tabelle im Druck */
+    .zeit-table thead { display: table-header-group !important; }
+    .zeit-table, .zeit-table tbody, .zeit-table tr, .zeit-table td { display: revert !important; }
+    .zeit-table td::before { display: none !important; }
   }
 `;

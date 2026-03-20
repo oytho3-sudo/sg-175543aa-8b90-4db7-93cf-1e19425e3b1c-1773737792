@@ -851,6 +851,16 @@ function PruefZeile({ zeile, state, onChange, rowIndex, t }: {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const printStyles = `
+  /* ── Globaler Reset: kein Overflow-Block beim Drehen ── */
+  html, body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+    height: auto !important;
+    min-height: 100%;
+  }
+
   @page { size: A4 portrait; margin: 10mm 11mm; }
   @media print {
     .no-print { display: none !important; }
@@ -889,7 +899,7 @@ const printStyles = `
   /* ── Handy Querformat ── */
   @media screen and (max-width: 900px) and (orientation: landscape) {
     .toolbar-title { display: none; }
-    #page-wrapper  { padding: 4px !important; }
+    #page-wrapper  { padding: 4px !important; padding-left: max(4px, env(safe-area-inset-left)) !important; padding-right: max(4px, env(safe-area-inset-right)) !important; }
     .a4            { padding: 6mm 6mm !important; font-size: 90% !important; }
   }
 `;
@@ -1011,25 +1021,47 @@ export default function WartungsprotokollPage() {
   };
 
   const handleShare = async () => {
-    try {
-      const blob = new Blob([JSON.stringify(collectFormData(), null, 2)], { type: 'application/json' });
-      const file = new File([blob], getFileNameFn('json'), { type: 'application/json' });
-      // Natives Teilen (Android, iOS Safari 15+)
-      const canNativeShare = typeof navigator.share === 'function' &&
-        typeof navigator.canShare === 'function' &&
-        navigator.canShare({ files: [file] });
-      if (canNativeShare) {
-        await navigator.share({ title: t.labelWartungShare, files: [file] });
-      } else {
-        // Fallback: direkt herunterladen (Desktop, ältere Browser)
-        const url = URL.createObjectURL(blob);
-        const a   = document.createElement('a'); a.href = url; a.download = getFileNameFn('json');
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
-        showToast(t.toastDownloaded, 'success');
+    const jsonStr = JSON.stringify(collectFormData(), null, 2);
+    const baseName = getFileNameFn('json');
+    // Versuche zuerst als .json zu teilen, Fallback auf .txt (breiter unterstützt)
+    const tryShare = async (mimeType: string, ext: string) => {
+      const blob = new Blob([jsonStr], { type: mimeType });
+      const fileName = baseName.replace(/\.json$/, '.' + ext);
+      const file = new File([blob], fileName, { type: mimeType });
+      if (typeof navigator.share === 'function') {
+        try {
+          if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+            await navigator.share({ title: t.labelWartungShare, files: [file] });
+            return true;
+          }
+        } catch (e) {
+          if ((e as Error).name === 'AbortError') return true;
+        }
       }
+      return false;
+    };
+    try {
+      // 1. Versuch: .json
+      if (await tryShare('application/json', 'json')) return;
+      // 2. Versuch: .txt (iOS Safari akzeptiert text/plain zuverlässig)
+      if (await tryShare('text/plain', 'txt')) return;
+      // 3. Versuch: nur Text ohne Datei
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share({ title: t.labelWartungShare, text: jsonStr });
+          return;
+        } catch (e) {
+          if ((e as Error).name === 'AbortError') return;
+        }
+      }
+      // Fallback: Download
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = baseName;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      showToast(t.toastDownloaded, 'success');
     } catch (err: unknown) {
-      // AbortError = User hat Teilen-Dialog geschlossen → kein Fehler zeigen
       if ((err as Error).name !== 'AbortError') showToast(t.toastError + (err as Error).message, 'error');
     }
   };
@@ -1180,7 +1212,7 @@ export default function WartungsprotokollPage() {
       <style>{printStyles}</style>
 
       {/* ── Toolbar ── */}
-      <div id="toolbar" className="no-print" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#1a2744', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', boxSizing: 'border-box' }}>
+      <div id="toolbar" className="no-print" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#1a2744', padding: '6px 10px', paddingLeft: 'max(10px, env(safe-area-inset-left))', paddingRight: 'max(10px, env(safe-area-inset-right))', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', boxSizing: 'border-box' }}>
         <button onClick={() => fileInputRef.current?.click()} style={tbtn('#8e24aa')}>{t.loadJson}</button>
         <button onClick={handlePdf}   style={tbtn('#e8460a')}>{t.savePdf}</button>
         <button onClick={handleShare} style={tbtn('#1a7a3a')}>{t.shareJson}</button>
@@ -1194,7 +1226,7 @@ export default function WartungsprotokollPage() {
       </div>
 
       {/* ── Seiten ── */}
-      <div id="page-wrapper" style={{ marginTop: 56, padding: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+      <div id="page-wrapper" style={{ marginTop: 56, padding: '8px', paddingLeft: 'max(8px, env(safe-area-inset-left))', paddingRight: 'max(8px, env(safe-area-inset-right))', paddingBottom: 'max(16px, env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, boxSizing: 'border-box', minHeight: '100vh' }}>
 
         {/* ══════════════ SEITE 1 ══════════════ */}
         <div className="a4" style={{ width: 'min(210mm, 100%)', background: '#fff', padding: '10mm 11mm', boxShadow: '0 3px 16px rgba(0,0,0,.25)', boxSizing: 'border-box' }}>
