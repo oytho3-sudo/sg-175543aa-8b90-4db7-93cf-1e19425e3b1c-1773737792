@@ -43,6 +43,9 @@ export function NavBar() {
       .eq("id", userId)
       .single();
 
+    console.log("🔍 DEBUG - User Profile Data:", data);
+    console.log("🔍 DEBUG - User Role:", data?.role);
+    
     if (data) {
       setUserRole(data.role);
       setUserName(data.full_name);
