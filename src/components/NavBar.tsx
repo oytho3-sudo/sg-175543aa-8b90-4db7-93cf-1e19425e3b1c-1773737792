@@ -86,6 +86,16 @@ export function NavBar() {
               <span className="text-muted-foreground">{userName || user.email}</span>
             </div>
 
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/profil")}
+              className="hidden sm:flex"
+            >
+              <UserIcon className="h-4 w-4 mr-2" />
+              Profil
+            </Button>
+
             {userRole === "admin" && (
               <Button
                 variant="outline"
