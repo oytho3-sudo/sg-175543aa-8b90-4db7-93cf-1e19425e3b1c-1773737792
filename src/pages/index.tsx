@@ -18,6 +18,9 @@ export default function Home() {
               <h1 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-magenta bg-clip-text text-transparent">
                 GERLIEVA App
               </h1>
+              <p className="text-xl text-muted-foreground">
+                Wartungsprotokolle und Serviceberichte
+              </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
