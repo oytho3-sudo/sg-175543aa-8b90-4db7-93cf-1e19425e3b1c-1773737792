@@ -12,6 +12,10 @@ export const UpdateToast: React.FC<Props> = ({ registration, onDismiss }) => {
 
   const handleUpdate = () => {
     registration.waiting?.postMessage({ type: "SKIP_WAITING" });
+    // Toast sofort verstecken, Page wird gleich neu geladen
+    if (onDismiss) {
+      onDismiss();
+    }
   };
 
   return (
