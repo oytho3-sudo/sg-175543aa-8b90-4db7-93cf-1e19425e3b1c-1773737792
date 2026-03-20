@@ -1,5 +1,5 @@
 // WICHTIG: Diese Version MUSS bei jedem Deploy geändert werden!
-const CACHE_VERSION = '2026-03-19-09-21';
+const CACHE_VERSION = '2026-03-20-10-06';
 const CACHE_NAME = `gerlieva-cache-${CACHE_VERSION}`;
 
 const urlsToCache = [
@@ -14,7 +14,6 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
-      // WICHTIG: skipWaiting() entfernt, damit nicht automatisch aktiviert wird
   );
 });
 
@@ -35,20 +34,34 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - Network First, fallback to Cache
+// Fetch event - Network First, fallback to Cache (aber NICHT für API-Calls!)
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // WICHTIG: API-Calls und externe Requests NICHT cachen!
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.hostname.includes('supabase.co') ||
+    event.request.method !== 'GET'
+  ) {
+    // Direkt an Netzwerk weiterleiten ohne Caching
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Nur statische Assets cachen
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone and cache the response
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
+        if (response && response.status === 200) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
         return response;
       })
       .catch(() => {
-        // If network fails, try cache
         return caches.match(event.request);
       })
   );

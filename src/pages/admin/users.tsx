@@ -61,32 +61,31 @@ export default function UsersPage() {
     setCreating(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newUserEmail,
-        password: newUserPassword,
-        email_confirm: true,
+      const response = await fetch("/api/admin/create-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: newUserEmail,
+          password: newUserPassword,
+          full_name: newUserName,
+          role: newUserRole,
+        }),
       });
 
-      if (authError) throw authError;
+      const data = await response.json();
 
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({
-            full_name: newUserName,
-            role: newUserRole,
-          })
-          .eq("id", authData.user.id);
-
-        if (profileError) throw profileError;
-
-        setSuccess("Benutzer erfolgreich erstellt!");
-        setNewUserEmail("");
-        setNewUserPassword("");
-        setNewUserName("");
-        setNewUserRole("viewer");
-        await fetchProfiles();
+      if (!response.ok) {
+        throw new Error(data.error || "Fehler beim Erstellen des Benutzers");
       }
+
+      setSuccess("Benutzer erfolgreich erstellt!");
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserName("");
+      setNewUserRole("viewer");
+      await fetchProfiles();
     } catch (err: any) {
       setError(err.message || "Fehler beim Erstellen des Benutzers");
     } finally {
@@ -114,8 +113,19 @@ export default function UsersPage() {
     if (!confirm("Sind Sie sicher, dass Sie diesen Benutzer löschen möchten?")) return;
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) throw error;
+      const response = await fetch("/api/admin/delete-user", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Fehler beim Löschen des Benutzers");
+      }
 
       setSuccess("Benutzer erfolgreich gelöscht!");
       await fetchProfiles();
