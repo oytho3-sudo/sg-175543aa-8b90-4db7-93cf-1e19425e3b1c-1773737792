@@ -7,10 +7,22 @@ export function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing Supabase Service Role credentials");
+  console.log("Checking Supabase credentials...");
+  console.log("Supabase URL:", supabaseUrl ? "✓ Present" : "✗ Missing");
+  console.log("Service Role Key:", serviceRoleKey ? "✓ Present" : "✗ Missing");
+
+  if (!supabaseUrl) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is missing from environment variables");
   }
 
+  if (!serviceRoleKey) {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY is missing from environment variables. " +
+      "Please add it in Softgen Settings → Environment → SUPABASE_SERVICE_ROLE_KEY"
+    );
+  }
+
+  console.log("Creating Supabase admin client...");
   return createClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
