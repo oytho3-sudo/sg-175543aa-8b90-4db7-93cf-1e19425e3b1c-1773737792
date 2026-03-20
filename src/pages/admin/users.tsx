@@ -13,17 +13,17 @@ import { SEO } from "@/components/SEO";
 import { Users, UserPlus, Trash2, Shield } from "lucide-react";
 import { useRouter } from "next/router";
 
-interface Profile {
+interface UserProfile {
   id: string;
   email: string;
-  full_name: string | null;
+  full_name: string;
   role: string;
   created_at: string;
 }
 
 export default function UsersPage() {
   const router = useRouter();
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -35,18 +35,20 @@ export default function UsersPage() {
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    fetchProfiles();
+    fetchUsers();
   }, []);
 
-  const fetchProfiles = async () => {
+  const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      setLoading(true);
+      const response = await fetch("/api/admin/list-users");
+      const data = await response.json();
 
-      if (error) throw error;
-      setProfiles(data || []);
+      if (!response.ok) {
+        throw new Error(data.error || "Fehler beim Laden der Benutzer");
+      }
+
+      setUsers(data.users || []);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -85,7 +87,7 @@ export default function UsersPage() {
       setNewUserPassword("");
       setNewUserName("");
       setNewUserRole("Techniker");
-      await fetchProfiles();
+      await fetchUsers();
     } catch (err: any) {
       setError(err.message || "Fehler beim Erstellen des Benutzers");
     } finally {
@@ -95,15 +97,22 @@ export default function UsersPage() {
 
   const handleUpdateRole = async (userId: string, newRole: string) => {
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: newRole })
-        .eq("id", userId);
+      const response = await fetch("/api/admin/update-user-role", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, role: newRole }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Fehler beim Aktualisieren der Rolle");
+      }
 
       setSuccess("Rolle erfolgreich aktualisiert!");
-      await fetchProfiles();
+      await fetchUsers();
     } catch (err: any) {
       setError(err.message);
     }
@@ -128,7 +137,7 @@ export default function UsersPage() {
       }
 
       setSuccess("Benutzer erfolgreich gelöscht!");
-      await fetchProfiles();
+      await fetchUsers();
     } catch (err: any) {
       setError(err.message);
     }
@@ -148,7 +157,7 @@ export default function UsersPage() {
   };
 
   return (
-    <AuthGuard allowedRoles={["admin"]}>
+    <AuthGuard allowedRoles={["Admin"]}>
       <SEO title="Benutzerverwaltung" description="Verwalten Sie Benutzer und Berechtigungen" />
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -269,16 +278,16 @@ export default function UsersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {profiles.map((profile) => (
-                      <TableRow key={profile.id}>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
                         <TableCell className="font-medium">
-                          {profile.full_name || "Nicht angegeben"}
+                          {user.full_name || "Nicht angegeben"}
                         </TableCell>
-                        <TableCell>{profile.email}</TableCell>
+                        <TableCell>{user.email}</TableCell>
                         <TableCell>
                           <Select
-                            value={profile.role}
-                            onValueChange={(value) => handleUpdateRole(profile.id, value)}
+                            value={user.role}
+                            onValueChange={(value) => handleUpdateRole(user.id, value)}
                           >
                             <SelectTrigger className="w-40">
                               <SelectValue />
@@ -290,13 +299,13 @@ export default function UsersPage() {
                           </Select>
                         </TableCell>
                         <TableCell>
-                          {new Date(profile.created_at).toLocaleDateString("de-DE")}
+                          {new Date(user.created_at).toLocaleDateString("de-DE")}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => handleDeleteUser(profile.id)}
+                            onClick={() => handleDeleteUser(user.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
