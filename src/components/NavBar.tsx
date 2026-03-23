@@ -64,20 +64,7 @@ export function NavBar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-6">
-            <Link href="/" className="text-xl font-bold">
-              Wartungsprotokolle
-            </Link>
-            <div className="hidden md:flex items-center gap-4">
-              <Link href="/protokolle" className="text-sm hover:text-primary">
-                Protokolle
-              </Link>
-              <Link href="/ServiceberichtPage" className="text-sm hover:text-primary">
-                Servicebericht
-              </Link>
-              <Link href="/Wartungsprotokoll_GS" className="text-sm hover:text-primary">
-                Wartung GS
-              </Link>
-            </div>
+            {/* Left side navigation removed */}
           </div>
 
           <div className="flex items-center gap-4">
