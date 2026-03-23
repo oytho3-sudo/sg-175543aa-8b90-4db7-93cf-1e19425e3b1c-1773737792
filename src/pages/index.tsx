@@ -44,6 +44,17 @@ export default function Home() {
                   Protokolle
                 </Button>
               </Link>
+
+              <Link href="/teileliste">
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="w-full sm:w-auto text-lg px-8 py-6 border-2 hover:bg-magenta/10 hover:border-magenta shadow-lg hover:shadow-xl transition-all"
+                >
+                  <FileText className="mr-2 h-5 w-5" />
+                  Teileliste
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
